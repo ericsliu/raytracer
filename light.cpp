@@ -47,30 +47,6 @@ void Color::sub(Color color) {
 }
 
 /*
-Color operator*(const Color& u, float k) {
-}
-
-Color operator*(float k, const Color& u) {
-  Color temp = Color(u.r * k, u.g * k, u.b * k);
-  return temp;
-}
-
-Color operator*(const Color& u, const Color& v) {
-  Color temp = Color(u.r * v.r, u.g * v.g, u.b * v.b);
-  return temp;
-}
-
-Color operator+(const Color& u, const Color& v) {
-  Color temp = Color(u.r + v.r, u.g + v.g, u.b + v.b);
-  return temp;
-}
-
-std::ostream& operator<<(std::ostream& os, const Color& c) {
-  os << "[r,g,b] = [" << c.r << ", " << c.g << ", " << c.b << "] \n";
-  return os;
-}*/
-
-/*
  * Class Light
  */
 Light::Light() {
@@ -81,8 +57,3 @@ Light::Light(float xVal, float yVal, float zVal, float red, float green, float b
   vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue);
   if (point) { type = "point"; } else { type = "directional"; }
 }
-/*
-std::ostream& operator<<(std::ostream& os, const Light& l) {
-  os << l.type << " light: " << l.vector << " , " << l.color;
-  return os;
-}*/

@@ -21,7 +21,5 @@ geometry.o: geometry.cpp
 	$(CC) $(CFLAGS) -c geometry.cpp -o geometry.o
 clean: 
 	$(RM) *.o raytracer
-test:
-	$(CC) $(CFLAGS) -c test.cpp -o test.o $(LDFLAGS)
 geometry:
 	$(CC) $(CFLAGS) -o test test.o $(LDFLAGS) 
