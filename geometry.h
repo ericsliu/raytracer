@@ -11,6 +11,9 @@ class Point {
     float z;
     Point();
     Point(float, float, float);
+    void add(Vector);
+    void sub(Vector);
+    Vector sub(Point);
 };
 
 /*
@@ -31,12 +34,13 @@ class Vector {
     float getZ();
     void scale(float k);
     void normalize();
-    float dot(Vector vector);
-    void add(Vector vector);
-    void sub(Vector vector);
-    void add(Point point);
-    void sub(Point point);
-    void getDist(Point a, Point b); // Coordinates of b - a
+    float norm();
+    float dot(Vector);
+    Vector cross(Vector);
+    void add(Vector);
+    void sub(Vector);
+    void add(Point);
+    void sub(Point);
 };
 
 /*
@@ -53,4 +57,61 @@ class Ray {
     float tMax;
     Ray();
     Ray(Point, Vector);
+    Ray(Point, Vector, float);
+    Ray(Point, Vector, float, float);
+    Point at(float);
+};
+
+/*
+ * Class LocalGeo
+ */
+class LocalGeo {
+  public:
+    Point pos;
+    Vector normal;
+    LocalGeo();
+    LocalGeo(Point, Normal);
+    void setPosition(Point);
+    void setNormal(Normal);
+    Point getPosition();
+    Normal getNormal();
+};
+
+
+/*
+ * Class Shape
+ */
+class Shape {
+  public:
+    virtual bool intersect(Ray&) = 0;
+    virtual bool intersect(Ray&, float*, LocalGeo*) = 0;
+};
+
+/*
+ * Class Circle
+ */
+class Circle : public Shape {
+  public:
+    Point center;
+    float radius;
+    Circle();
+    Circle(Point, float);
+    bool intersect(Ray&);
+    bool intersect(Ray&, float*, LocalGeo*);
+    // bool intersect(Ray&, float*);
+};
+
+/*
+ * Class Triangle
+ */
+class Triangle : public Shape {
+  public:
+    Point vertex;
+    Vector edgeOne;
+    Vector edgeTwo;
+    Triangle();
+    Triangle(Point, Point, Point);
+    bool intersect(Ray&);
+    bool intersect(Ray&, float*, LocalGeo*);
+    // bool intersect(Ray&, float*, float*, float*);
 };

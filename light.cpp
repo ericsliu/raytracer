@@ -49,11 +49,33 @@ void Color::sub(Color color) {
 /*
  * Class Light
  */
-Light::Light() {
+PointLight::PointLight() {
   vector = Vector(); color = Color(); type = "point";
 }
 
-Light::Light(float xVal, float yVal, float zVal, float red, float green, float blue, bool point) {
-  vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue);
-  if (point) { type = "point"; } else { type = "directional"; }
+PointLight::PointLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
+  vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue); type = "point";
+}
+
+void PointLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
+  Vector direction = vector.sub(local.getPosition());
+  tMax = direction.norm();
+  direction.normalize();
+  lray = Ray(local.getPosition(), direction, tMax);
+  lcolor = color;
+}
+
+DirecLight::DirecLight() {
+  vector = Vector(); color = Color(); type = "directional";
+}
+
+DirecLight::DirecLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
+  vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue); type = "directional";
+}
+
+void DirecLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
+  Vector dir = direction;
+  dir.scale(-dir.norm());
+  lray = Ray(local.getPosition(), dir);
+  lcolor = color;
 }
