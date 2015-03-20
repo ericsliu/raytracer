@@ -94,6 +94,9 @@ Matrix Matrix::mul(Matrix b) {
   return product;
 }
 
+Matrix Matrix::rotate(Ray ray) {
+}
+
 Matrix Matrix::inv() {
   Matrix inverse = Matrix();
   // find the determinant

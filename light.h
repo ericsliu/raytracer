@@ -61,18 +61,10 @@ class DirecLight: public Light {
 class Object {
   public:
     Shape* shape;
-    float ambr;
-    float ambg;
-    float ambb;
-    float difr;
-    float difg;
-    float difb;
-    float sper;
-    float speg;
-    float speb;
-    float refr;
-    float refg;
-    float refb;
+    Color ambient;
+    Color diffuse;
+    Color specular;
+    Color reflective;
     Object();
     Object(Shape*);
     Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float);

@@ -265,18 +265,12 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
 }
 
 //****************************************************
-// Draw a filled circle.
+// Sample the image
 //****************************************************
 
 
 void circle(float centerX, float centerY, float radius) {
-  // Draw inner circle
   glBegin(GL_POINTS);
-
-  // We could eliminate wasted work by only looping over the pixels
-  // inside the sphere's radius.  But the example is more clear this
-  // way.  In general drawing an object by looping over the whole
-  // screen is wasteful.
 
   int i,j;  // Pixel indices
 
@@ -285,9 +279,13 @@ void circle(float centerX, float centerY, float radius) {
 
   int minJ = max(0,(int)floor(centerY-radius));
   int maxJ = min(viewport.h-1,(int)ceil(centerY+radius));
+
+  for (i = 0; i < viewport.w; i++) {
+    for (j = 0; i < viewport.h; j++) {
+    }
+  }
 /*
   Vector center = Vector(centerX,centerY,0);
-
 
   for (i=0;i<viewport.w;i++) {
     for (j=0;j<viewport.h;j++) {
@@ -365,7 +363,7 @@ int main(int argc, char *argv[]) {
   argParser(argc, argv);
 
   // Run some tests (comment out as necessary)
-  tests();
+  //tests();
 
   // Load up .obj files
   loadObjs();

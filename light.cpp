@@ -116,16 +116,8 @@ Object::Object(Shape* inShape) {
 
 Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
   shape = inShape;
-  ambr = ar;
-  ambg = ag;
-  ambb = ab;
-  difr = dr;
-  difg = dg;
-  difb = db;
-  sper = sr;
-  speg = sg;
-  speb = sb;
-  refr = rr;
-  refg = rg;
-  refb = rb;
+  ambient = Color(ar, ag, ab);
+  diffuse = Color(dr, dg, db);
+  specular = Color(sr, sg, sb);
+  reflective = Color(rr, rg, rb);
 }
