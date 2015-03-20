@@ -38,21 +38,21 @@ class Light {
     std::string type;
     Light();
     Light(float,float,float,float,float,float);
-    virtual void generateLightRay(LocalGeo&, Ray&, Color&) = 0;
+    virtual void generateLightRay(LocalGeo*, Ray&, Color&) = 0;
 };
 
 class PointLight: public Light {
   public:
     PointLight();
     PointLight(float,float,float,float,float,float);
-    void generateLightRay(LocalGeo&, Ray&, Color&);
+    void generateLightRay(LocalGeo*, Ray&, Color&);
 };
 
 class DirecLight: public Light {
   public:
     DirecLight();
     DirecLight(float,float,float,float,float,float);
-    void generateLightRay(LocalGeo&, Ray&, Color&);
+    void generateLightRay(LocalGeo*, Ray&, Color&);
 };
 
 /*

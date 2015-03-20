@@ -62,7 +62,11 @@ class Viewport {
 // Global Variables
 //****************************************************
 Viewport viewport;
-Ray camera;
+Point camera = Point(0, 0, 0);
+Point ul = Point(-0.5, 0.5, 0.5);
+Point ll = Point(-0.5, -0.5, 0.5);
+Point ur = Point(0.5, 0.5, 0.5);
+Point lr = Point(0.5, -0.5, 0.5);
 Color ambient;
 Color diffuse;
 Color specular;
@@ -280,10 +284,59 @@ void circle(float centerX, float centerY, float radius) {
   int minJ = max(0,(int)floor(centerY-radius));
   int maxJ = min(viewport.h-1,(int)ceil(centerY+radius));
 
+  float xStep = 1.0 / viewport.w;
+  float yStep = 1.0 / viewport.h;
+
+  printf("w = %d, h = %d", viewport.w, viewport.h);
+  printf("xStep = %f, yStep = %f\n", xStep, yStep);
+
+  Vector cameraDir = Vector(0, 0, 1.0);
+  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
+  DirecLight testLight = DirecLight(0.25, 0.25, 0.25, 1, 0, 1);
+  LocalGeo geo = LocalGeo();
+  LocalGeo* geoPointer = &geo;
+
   for (i = 0; i < viewport.w; i++) {
-    for (j = 0; i < viewport.h; j++) {
+    /*
+    if (i % 10 == 0) {
+      printf("i = %d\n", i);
+    }*/
+    for (j = 0; j < viewport.h; j++) {
+      // send out a ray
+      Point viewPlanePoint = Point(i * xStep - 0.5, j * yStep - 0.5, 1);
+      Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera), 8.0);
+      Ray lightRay;
+      Color lightColor;
+      float hitPoint = testSphere.intersect(sampleRay, geoPointer);
+      float hitLight;
+      if (hitPoint != -1.0) {
+        testLight.generateLightRay(geoPointer, lightRay, lightColor);
+        hitLight = testSphere.intersect(lightRay);
+        //printf("hitlight = %f\n", hitLight);
+        if (hitLight == -1.0) {
+          setPixel(i, j, (geoPointer->normal.x / 2) + 0.25, (geoPointer->normal.y / 2) + 0.25, geoPointer->normal.z);
+        } else {
+          setPixel(i, j, 1, 0, 1);
+        }
+      } else {
+        setPixel(i, j, 0, 0, 0);
+      }
+      /*
+      if (sqrt(pow(i - 400, 2) + pow(j - 400, 2)) <= 400) {
+        setPixel(i, j, 1, 1, 1);
+      } else {
+        setPixel(i, j, 0, 0, 0);
+      }
+      */
     }
   }
+
+/*
+  Ray testRay = Ray(Point(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 1.0, 8.0);
+  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
+  float hitPoint = testSphere.intersect(testRay);
+  */
+
 /*
   Vector center = Vector(centerX,centerY,0);
 

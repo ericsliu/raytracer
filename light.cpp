@@ -67,12 +67,12 @@ PointLight::PointLight(float xVal, float yVal, float zVal, float red, float gree
   type = "point";
 }
 
-void PointLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
+void PointLight::generateLightRay(LocalGeo* local, Ray& lray, Color& lcolor) {
   Vector direction = vector;
-  direction.sub(local.getPosition());
+  direction.sub(local->getPosition());
   float tMax = direction.norm();
   direction.normalize();
-  lray = Ray(local.getPosition(), direction, tMax);
+  lray = Ray(local->getPosition(), direction, tMax);
   lcolor = color;
 }
 
@@ -88,10 +88,10 @@ DirecLight::DirecLight(float xVal, float yVal, float zVal, float red, float gree
   type = "directional";
 }
 
-void DirecLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
+void DirecLight::generateLightRay(LocalGeo* local, Ray& lray, Color& lcolor) {
   Vector dir = vector;
-  dir.scale(-dir.norm());
-  lray = Ray(local.getPosition(), dir);
+  dir.scale(-1);
+  lray = Ray(local->getPosition(), dir);
   lcolor = color;
 }
 
@@ -100,18 +100,10 @@ Object::Object() {
 
 Object::Object(Shape* inShape) {
   shape = inShape;
-  ambr = 0.7;
-  ambg = 0.7;
-  ambb = 0.7;
-  difr = 0.7;
-  difg = 0.7;
-  difb = 0.7;
-  sper = 0.7;
-  speg = 0.7;
-  speb = 0.7;
-  refr = 0.7;
-  refg = 0.7;
-  refb = 0.7;
+  ambient = Color(0.7, 0.7, 0.7);
+  diffuse = Color(0.7, 0.7, 0.7);
+  specular = Color(0.7, 0.7, 0.7);
+  reflective = Color(0.7, 0.7, 0.7);
 }
 
 Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {

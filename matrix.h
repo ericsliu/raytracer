@@ -22,5 +22,6 @@ class Matrix {
     Matrix(Vector);
     void printMatrix();
     Matrix mul(Matrix); //equivalent to AB, where A is this matrix
+    Matrix rotate(Ray);
     Matrix inv();
 };

@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#define EPSILON 1e-6
+#define EPSILON 1e-4
 
 /*
  * Class Point
@@ -196,22 +196,21 @@ float Sphere::intersect(Ray& ray) {
   float b = ray.dir.dot(temp) * 2;
   float c = temp.dot(temp) - pow(radius,2);
   float discriminant = pow(b / 2, 2) - c;
-  printf("discrim = %f\n", discriminant);
+  //printf("discrim = %f\n", discriminant);
 
   if (discriminant > 0) {
-    printf("discrim > 0\n");
-    //float t1 = (-b+sqrt(discriminant))/(a*2);
-    //float t2 = (-b-sqrt(discriminant))/(a*2);
+    //printf("discrim > 0\n");
     float t1 = a - sqrt(discriminant);
     float t2 = a + sqrt(discriminant);
-    printf("t1 = %f\n", t1);
-    printf("t2 = %f\n", t2);
-    if (t1 >= 0.0) {
+    //printf("t1 = %f\n", t1);
+    //printf("t2 = %f\n", t2);
+    if (t1 >= ray.tMin) {
       return t1;
     } else return t2;
   }
   else if (discriminant == 0) {
-    if (a >= 0.0) {
+    printf("hello");
+    if (a >= ray.tMin) {
       return a;
     } else return -1.0;
   } else return -1.0;
