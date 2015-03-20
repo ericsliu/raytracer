@@ -192,21 +192,25 @@ Sphere::Sphere(Point c, float r) {
 float Sphere::intersect(Ray& ray) {
   Vector temp = Vector(ray.origin);
   temp.sub(center);
-  float a = ray.dir.dot(temp) * -1;
+  float a = ray.dir.dot(ray.dir);
   float b = ray.dir.dot(temp) * 2;
   float c = temp.dot(temp) - pow(radius,2);
-  float discriminant = pow(b / 2, 2) - c;
+  float discriminant = pow(b, 2) - 4 * c;
   //printf("discrim = %f\n", discriminant);
 
   if (discriminant > 0) {
     //printf("discrim > 0\n");
-    float t1 = a - sqrt(discriminant);
-    float t2 = a + sqrt(discriminant);
+    float t1 = (-b - sqrt(discriminant)) / 2;
+    float t2 = (-b + sqrt(discriminant)) / 2;
     //printf("t1 = %f\n", t1);
     //printf("t2 = %f\n", t2);
     if (t1 >= ray.tMin) {
+      //printf("returning t1 = %f, ray.tMin = %f\n", t1, ray.tMin);
       return t1;
-    } else return t2;
+    } else if (t2 >= ray.tMin) {
+      //printf("ray starts at (%f,%f,%f) and has dir (%f,%f,%f)\n", ray.origin.x, ray.origin.y, ray.origin.z, ray.dir.x, ray.dir.y, ray.dir.z);
+      return t2;
+    } else return -1.0;
   }
   else if (discriminant == 0) {
     printf("hello");

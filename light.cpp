@@ -8,12 +8,20 @@
  * Class Color
  */
 Color::Color() {
-  r = 0; g = 0; b = 0;
+  r = 1; g = 1; b = 1;
 }
 
 Color::Color(float red, float green, float blue) {
   if (r>1){r=1;} if (g>1){g=1;} if (b>1){b=1;}
   r = red; g = green; b = blue;
+}
+
+Color::Color(Vector vector) {
+  Vector temp = vector;
+  temp.normalize();
+  r = temp.x;
+  g = temp.y;
+  b = temp.z;
 }
 
 void Color::cutOff() {
@@ -46,6 +54,12 @@ void Color::sub(Color color) {
   g = g - color.g;
 }
 
+void Color::mul(Color color) {
+  r = r * color.r;
+  b = b * color.b;
+  g = g * color.g;
+}
+
 /*
  * Class Light
  */
@@ -63,6 +77,7 @@ PointLight::PointLight() {
 
 PointLight::PointLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
   vector = Vector(xVal,yVal,zVal);
+  vector.normalize();
   color = Color(red,green,blue);
   type = "point";
 }
@@ -84,6 +99,7 @@ DirecLight::DirecLight() {
 
 DirecLight::DirecLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
   vector = Vector(xVal,yVal,zVal);
+  vector.normalize();
   color = Color(red,green,blue);
   type = "directional";
 }
@@ -104,6 +120,14 @@ Object::Object(Shape* inShape) {
   diffuse = Color(0.7, 0.7, 0.7);
   specular = Color(0.7, 0.7, 0.7);
   reflective = Color(0.7, 0.7, 0.7);
+}
+
+Object::Object(Shape* inShape, Color amb, Color dif, Color spec, Color ref) {
+  shape = inShape;
+  ambient = amb;
+  diffuse = dif;
+  specular = spec;
+  reflective = ref;
 }
 
 Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {

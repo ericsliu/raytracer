@@ -72,9 +72,10 @@ Color diffuse;
 Color specular;
 Color shade;
 Vector point;
-float p;
+float p = 40;
 std::vector<Light*> lights;
 std::vector<Point> objPoints;
+std::vector<Object> objects;
 //std::vector<
 
 //****************************************************
@@ -132,7 +133,16 @@ void tests() {
   // intersection tests
   printf("testing intersection:\n");
   printf("spheres\n");
+  /*
   Ray testRay = Ray(Point(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 1.0, 8.0);
+  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
+  float hitPoint = testSphere.intersect(testRay);
+  if (hitPoint != -1.0) {
+    printf("HIT\n");
+  }
+  printf("hitPoint = %f\n", hitPoint);
+  */
+  Ray testRay = Ray(Point(0.718590, 1.654307, 4.135769), Vector(-0.577350,-0.577350,-0.577350), 1.0, 8.0);
   Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
   float hitPoint = testSphere.intersect(testRay);
   if (hitPoint != -1.0) {
@@ -292,42 +302,77 @@ void circle(float centerX, float centerY, float radius) {
 
   Vector cameraDir = Vector(0, 0, 1.0);
   Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
-  DirecLight testLight = DirecLight(0.25, 0.25, 0.25, 1, 0, 1);
+  DirecLight testLight = DirecLight(0.25, 0.25, 0.25, 1, 1, 1);
   LocalGeo geo = LocalGeo();
   LocalGeo* geoPointer = &geo;
-
   for (i = 0; i < viewport.w; i++) {
-    /*
-    if (i % 10 == 0) {
-      printf("i = %d\n", i);
-    }*/
     for (j = 0; j < viewport.h; j++) {
       // send out a ray
       Point viewPlanePoint = Point(i * xStep - 0.5, j * yStep - 0.5, 1);
       Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera), 8.0);
       Ray lightRay;
-      Color lightColor;
+      Color pixColor = Color();
+      Color lightColor = Color();
       float hitPoint = testSphere.intersect(sampleRay, geoPointer);
       float hitLight;
+      //ambient
+      Color amb = Color(0.1, 0.1, 0.1);
+      amb.mul(lightColor);
+      pixColor.add(amb);
       if (hitPoint != -1.0) {
+        Point tempPoint = sampleRay.at(hitPoint);
+        //printf("hitPoint = %f, interPoint = (%f, %f, %f)\n", hitPoint, tempPoint.x, tempPoint.y, tempPoint.z);
         testLight.generateLightRay(geoPointer, lightRay, lightColor);
+        //printf("lightRay: origin = (%f, %f, %f)  dir = (%f, %f, %f)\n", lightRay.origin.x, lightRay.origin.y, lightRay.origin.z, lightRay.dir.x, lightRay.dir.y, lightRay.dir.z);
         hitLight = testSphere.intersect(lightRay);
         //printf("hitlight = %f\n", hitLight);
-        if (hitLight == -1.0) {
-          setPixel(i, j, (geoPointer->normal.x / 2) + 0.25, (geoPointer->normal.y / 2) + 0.25, geoPointer->normal.z);
-        } else {
-          setPixel(i, j, 1, 0, 1);
+        /*
+        float tempR = 0;
+        float tempG = 0;
+        float tempB = 0;
+        if (geoPointer->normal.x > 0) {
+          tempR = 1;
         }
+        if (geoPointer->normal.y > 0) {
+          tempG = 1;
+        }
+        if (geoPointer->normal.z < -0.5) {
+          tempB = 1;
+        }
+        setPixel(i, j, tempR, tempG, tempB);
+        */
+        if (hitLight == -1.0) {
+          //setPixel(i, j, (geoPointer->normal.x / 2) + 0.25, (geoPointer->normal.y / 2) + 0.25, geoPointer->normal.z);
+          Vector lightNeg = testLight.vector;
+          lightNeg.scale(-1);
+          lightNeg.normalize();
+          if (i == 400 && j == 400) {
+            printf("ambi: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+          }
+          //diffuse
+          Color difColor = Color(0.7, 0.1, 0.7);
+          difColor.mul(lightColor);
+          difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
+          pixColor.add(difColor);
+          if (i == 400 && j == 400) {
+            printf("diff: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+          }
+          //specular
+          Color speColor = Color(0.8, 0.8, 0.4);
+          speColor.mul(lightColor);
+          Vector speVector = geoPointer->normal;
+          speVector.scale(lightNeg.dot(geoPointer->normal) * 2);
+          speVector.add(testLight.vector);
+          speColor.scale(pow(std::max(speVector.dot(sampleRay.dir), 0.0f), p));
+          pixColor.add(speColor);
+          if (i == 400 && j == 400) {
+            printf("spec: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+          }
+        }
+        setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
       } else {
         setPixel(i, j, 0, 0, 0);
       }
-      /*
-      if (sqrt(pow(i - 400, 2) + pow(j - 400, 2)) <= 400) {
-        setPixel(i, j, 1, 1, 1);
-      } else {
-        setPixel(i, j, 0, 0, 0);
-      }
-      */
     }
   }
 

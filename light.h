@@ -21,10 +21,12 @@ class Color {
     float b;
     Color();
     Color(float,float,float);
+    Color(Vector);
     void cutOff();
     void scale(float k);
     void add(Color color);
     void sub(Color color);
+    void mul(Color color);
 };
 
 /*
@@ -67,5 +69,6 @@ class Object {
     Color reflective;
     Object();
     Object(Shape*);
+    Object(Shape*, Color, Color, Color, Color);
     Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float);
 };
