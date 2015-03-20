@@ -34,6 +34,10 @@
 #define GEOMETRY_H
 #include "geometry.h"
 #endif
+#ifndef MATRIX_H
+#define MATRIX_H
+#include "matrix.h"
+#endif
 
 #define PI 3.14159265  // Should be used from mathlib
 #define WINDOW_WIDTH 800.0
@@ -65,7 +69,7 @@ Color specular;
 Color shade;
 Vector point;
 float p;
-std::vector<Light> lights;
+std::vector<Light*> lights;
 std::vector<Point> objPoints;
 //std::vector<
 
@@ -84,6 +88,7 @@ void initScene() {
 void loadObjs() {
   std::ifstream infile("icosahedron.obj");
   std::string line;
+  /*
   while (std::getline(infile, line)) {
     //cout << "\n" << line;
     if (line.size() > 0 && line.at(0) == 'v') {
@@ -95,13 +100,78 @@ void loadObjs() {
       }
       objPoints.push_back(Point(x, y, z));
     }
-  }
+  }*/
   // CODE TO ENSURE PARSING .obj WORKS
   /*
   for (int i = 0; i < objPoints.size(); i++) {
     cout << objPoints[i].x << " " << objPoints[i].y << " " << objPoints[i].z << endl;
   }
   */
+}
+
+//****************************************************
+// Tests that can be run
+//****************************************************
+void tests() {
+  // point/vector tests
+  printf("declaring initial variables\n");
+  Point testPoint = Point(0.0, 1.0, 2.0);
+  printf("testPoint is (%f, %f, %f)\n", testPoint.x, testPoint.y, testPoint.z);
+  Vector testVector = Vector(0.6, 0.8, 1.0);
+  printf("testVector is (%f, %f, %f)\n", testVector.x, testVector.y, testVector.z);
+  Vector testVectorTwo = testVector;
+  printf("created new testVectorTwo = testVector, normalizing testVectorTwo\n");
+  testVectorTwo.normalize();
+  printf("testVector is (%f, %f, %f)\n", testVector.x, testVector.y, testVector.z);
+  printf("testVectorTwo is (%f, %f, %f)\n", testVectorTwo.x, testVectorTwo.y, testVectorTwo.z);
+
+  // intersection tests
+  printf("testing intersection:\n");
+  printf("spheres\n");
+  Ray testRay = Ray(Point(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 1.0, 8.0);
+  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
+  float hitPoint = testSphere.intersect(testRay);
+  if (hitPoint != -1.0) {
+    printf("HIT\n");
+  }
+  printf("hitPoint = %f\n", hitPoint);
+  printf("triangles\n");
+  Triangle testTriangle = Triangle(Point(-1.0, -1.0, 4.0), Point(0.0, 2.0, 4.0), Point(1.0, -1.0, 4.0));
+  LocalGeo geoTest = LocalGeo();
+  LocalGeo* geoTestPointer = &geoTest;
+  hitPoint = testTriangle.intersect(testRay, geoTestPointer);
+  if (hitPoint != -1.0) {
+    printf("HIT\n");
+  }
+  Vector geoNormal = geoTest.getNormal();
+  printf("hitPoint = %f\n", hitPoint);
+  printf("normal = (%f, %f, %f)\n", geoNormal.x, geoNormal.y, geoNormal.z);
+
+  // matrix tests
+  Matrix testVectorMatrix = Matrix(testVectorTwo);
+  testVectorMatrix.printMatrix();
+  Matrix testPointMatrix = Matrix(testPoint);
+  testPointMatrix.printMatrix();
+  testVectorMatrix.mul(testPointMatrix).printMatrix();
+  Matrix testInvMatrix = Matrix();
+  testInvMatrix.array[0][0] = 2;
+  testInvMatrix.array[0][1] = 3;
+  testInvMatrix.array[0][2] = 1;
+  testInvMatrix.array[0][3] = 5;
+  testInvMatrix.array[1][0] = 1;
+  testInvMatrix.array[1][1] = 0;
+  testInvMatrix.array[1][2] = 3;
+  testInvMatrix.array[1][3] = 1;
+  testInvMatrix.array[2][0] = 0;
+  testInvMatrix.array[2][1] = 2;
+  testInvMatrix.array[2][2] = -3;
+  testInvMatrix.array[2][3] = 2;
+  testInvMatrix.array[3][0] = 0;
+  testInvMatrix.array[3][1] = 2;
+  testInvMatrix.array[3][2] = 3;
+  testInvMatrix.array[3][3] = 1;
+  testInvMatrix.printMatrix();
+  testInvMatrix.inv().printMatrix();
 }
 
 //****************************************************
@@ -119,7 +189,7 @@ void mouseClick(int button, int state, int x, int y) {
 //****************************************************
 void deletePoints() {
   for (int i = 0; i < lights.size(); i++) {
-    if (lights[i].type == "point") {
+    if (lights[i]->type == "point") {
       lights.erase(lights.begin() + i);
       i--;
     }
@@ -293,6 +363,9 @@ void myIdle() {
 int main(int argc, char *argv[]) {
   // This parses the input arguments to set variables/params
   argParser(argc, argv);
+
+  // Run some tests (comment out as necessary)
+  tests();
 
   // Load up .obj files
   loadObjs();

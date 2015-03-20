@@ -2,7 +2,9 @@
 #define GEOMETRY_H
 #include "geometry.h"
 #endif
+#include <limits>
 #include <math.h>
+#include <stdio.h>
 
 #define EPSILON 1e-6
 
@@ -41,46 +43,28 @@ Vector Point::sub(Point p) {
  * Class Vector
  */
 Vector::Vector() {
-  dir.x = 1;
-  dir.y = 1;
-  dir.z = 1;
+  x = 1;
+  y = 1;
+  z = 1;
   this->normalize();
 }
 
 Vector::Vector(float xVal, float yVal, float zVal) {
-  dir.x = xVal;
-  dir.y = yVal;
-  dir.z = zVal;
+  x = xVal;
+  y = yVal;
+  z = zVal;
 }
 
-void Vector::setX(float x) {
-  dir.x = x;
-}
-
-void Vector::setY(float y) {
-  dir.y = y;
-}
-
-void Vector::setZ(float z) {
-  dir.z = z;
-}
-
-float Vector::getX() {
-  return dir.x;
-}
-
-float Vector::getY() {
-  return dir.y;
-}
-
-float Vector::getZ() {
-  return dir.z;
+Vector::Vector(Point point) {
+  x = point.x;
+  y = point.y;
+  z = point.z;
 }
 
 void Vector::scale(float k) {
-  setX(getX() * k);
-  setY(getY() * k);
-  setZ(getZ() * k);
+  x = x * k;
+  y = y * k;
+  z = z * k;
 }
 
 void Vector::normalize() {
@@ -90,33 +74,39 @@ void Vector::normalize() {
 }
 
 float Vector::norm() {
-  return sqrt(pow(dir.x,2) + pow(dir.y,2) + pow(dir.z,2));
+  return sqrt(pow(x,2) + pow(y,2) + pow(z,2));
 }
 
 float Vector::dot(Vector vector) {
-  return getX() * vector.getX() + getY() * vector.getY() + getZ() * vector.getZ();
+  return x * vector.x + y * vector.y + z * vector.z;
 }
 
-Vector cross(Vector v) {
+Vector Vector::cross(Vector v) {
   return Vector(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);
 }
 
 void Vector::add(Vector vector) {
-  setX(getX() + vector.getX());
-  setY(getY() + vector.getY());
-  setZ(getZ() + vector.getZ());
+  x = x + vector.x;
+  y = y + vector.y;
+  z = z + vector.z;
 }
 
 void Vector::sub(Vector vector) {
-  setX(getX() - vector.getX());
-  setY(getY() - vector.getY());
-  setZ(getZ() - vector.getZ());
+  x = x - vector.x;
+  y = y - vector.y;
+  z = z - vector.z;
 }
 
 void Vector::add(Point point) {
-  setX(getX() + point.x);
-  setY(getY() + point.y);
-  setZ(getZ() + point.z);
+  x = x + point.x;
+  y = y + point.y;
+  z = z + point.z;
+}
+
+void Vector::sub(Point point) {
+  x = x - point.x;
+  y = y - point.y;
+  z = z - point.z;
 }
 
 /*
@@ -130,6 +120,7 @@ Ray::Ray() {
 Ray::Ray(Point orig, Vector direction) {
   origin = orig;
   dir = direction;
+  dir.normalize();
   tMin = EPSILON;
   tMax = std::numeric_limits<float>::infinity();
 }
@@ -137,6 +128,7 @@ Ray::Ray(Point orig, Vector direction) {
 Ray::Ray(Point orig, Vector direction, float tMaxVal) {
   origin = orig;
   dir = direction;
+  dir.normalize();
   tMin = EPSILON;
   tMax = tMaxVal;
 }
@@ -144,6 +136,7 @@ Ray::Ray(Point orig, Vector direction, float tMaxVal) {
 Ray::Ray(Point orig, Vector direction, float tMinVal, float tMaxVal) {
   origin = orig;
   dir = direction;
+  dir.normalize();
   tMin = tMinVal;
   tMax = tMaxVal;
 }
@@ -153,11 +146,13 @@ Point Ray::at(float t) {
   else if (t > tMax) t = tMax;
   Point point = origin;
   Vector direction = dir;
-  return point.add(direction.scale(t));
+  direction.scale(t);
+  point.add(direction);
+  return point;
 }
 
 LocalGeo::LocalGeo() {
-  point = Point();
+  pos = Point();
   normal = Vector();
 }
 
@@ -184,63 +179,55 @@ void LocalGeo::setNormal(Vector n) {
   normal.normalize();
 }
 
-Circle::Circle() {
+Sphere::Sphere() {
   center = Point();
   radius = 1;
 }
 
-Circle::Circle(Point c, float r) {
+Sphere::Sphere(Point c, float r) {
   center = c;
   radius = r;
 }
 
-bool Circle::intersect(Ray& ray, double* tHit=NULL) {
-  double a = ray.dir.dot(ray.dir);
-  Vector temp = ray.origin;
+float Sphere::intersect(Ray& ray) {
+  Vector temp = Vector(ray.origin);
   temp.sub(center);
-  double b = ray.dir.dot(temp) * 2;
-  double c = temp.dot(temp) - pow(radius,2);
-  double discriminant = pow(b,2) - 4*a*c;
+  float a = ray.dir.dot(temp) * -1;
+  float b = ray.dir.dot(temp) * 2;
+  float c = temp.dot(temp) - pow(radius,2);
+  float discriminant = pow(b / 2, 2) - c;
+  printf("discrim = %f\n", discriminant);
 
   if (discriminant > 0) {
-    double t1 = (-b+sqrt(discriminant))/(a*2);
-    double t2 = (-b-sqrt(discriminant))/(a*2);
-    // Force t1 >= t2
-    if (t2 > t1) {
-      double temp = t1;
-      t1 = t2;
-      t2 = temp;
-    }
-    if (t1 < ray.tMin || t2 > ray.tMax) return false;
-    else if (t1 <= ray.tMax) {
-      if (tHit) *tHit = t1;
-      return true;
-    }
-    else if (t2 >= ray.tMin) {
-      if (tHit) *tHit = t2;
-      return true;
-    } else return false;
+    printf("discrim > 0\n");
+    //float t1 = (-b+sqrt(discriminant))/(a*2);
+    //float t2 = (-b-sqrt(discriminant))/(a*2);
+    float t1 = a - sqrt(discriminant);
+    float t2 = a + sqrt(discriminant);
+    printf("t1 = %f\n", t1);
+    printf("t2 = %f\n", t2);
+    if (t1 >= 0.0) {
+      return t1;
+    } else return t2;
   }
   else if (discriminant == 0) {
-    double t = -b/(a*2);
-    if (t >= ray.tMin && t <= ray.tMax) {
-      if (tHit) *tHit = t;
-      return true;
-    } else return false;
-  } else return false;
+    if (a >= 0.0) {
+      return a;
+    } else return -1.0;
+  } else return -1.0;
 }
 
-bool Circle::intersect(Ray& ray, double* tHit, LocalGeo* local) {
-  if (intersect(ray,tHit)) {
-    Point temp = ray.at(*tHit);
-    local->setPosition(temp);
-    temp.sub(center);
-    temp.normalize()
-    local->setNormal(temp);
-    return true;
-  } else {
-    return false;
+float Sphere::intersect(Ray& ray, LocalGeo* local) {
+  float intersection = intersect(ray);
+  if (intersection != -1.0) {
+    Point point = ray.at(intersection);
+    Vector normal = Vector(point);
+    local->setPosition(point);
+    normal.sub(center);
+    normal.normalize();
+    local->setNormal(normal);
   }
+  return intersection;
 }
 
 Triangle::Triangle() {
@@ -255,31 +242,31 @@ Triangle::Triangle(Point point1, Point point2, Point point3) {
   edgeTwo = point3.sub(point1);
 }
 
-bool Triangle::intersect(Ray& ray, double*tHit=NULL) {
+float Triangle::intersect(Ray& ray) {
   // Citation:
   // http://tinyurl.com/2zve8a
   Vector pVec = ray.dir.cross(edgeTwo);
-  double det = pVec.dot(edgeOne);
-  if (det > -EPSILON && det < EPSILON) return false;
+  float det = pVec.dot(edgeOne);
+  if (det > -EPSILON && det < EPSILON) return -1.0;
   Vector tVec = ray.origin;
   tVec.sub(vertex);
-  double u, v;
+  float u, v;
   u = tVec.dot(pVec)/det;
-  if (u>1.0 || u<0.0) return false;
+  if (u>1.0 || u<0.0) return -1.0;
   Vector qVec = tVec.cross(edgeOne);
   v = ray.dir.dot(qVec)/det;
-  if (v+u>1.0 || v<0.0) return false;
-  double t = edgeTwo.dot(qVec)/det;
-  if (t<ray.tMin || t>ray.tMax) return false;
-  if (tHit) *tHit = t; // tHit is only changed when intersect is true
-  return true;
+  if (v+u>1.0 || v<0.0) return -1.0;
+  float t = edgeTwo.dot(qVec)/det;
+  if (t<ray.tMin || t>ray.tMax) return -1.0;
+  return t;
 }
 
-bool Triangle::intersect(Ray& ray, float* thit, LocalGeo* local) {
-  if (intersect(ray,tHit)) {
-    local->setPosition(ray.at(*tHit));
+float Triangle::intersect(Ray& ray, LocalGeo* local) {
+  float intersection = intersect(ray);
+  if (intersection != -1.0) {
+    local->setPosition(ray.at(intersection));
     Vector triNormal = Vector(edgeOne.cross(edgeTwo));
-    tirNormal.normalize();
+    triNormal.normalize();
     Vector geomNormal;
     if (ray.dir.dot(triNormal) > 0.0){
       geomNormal = Vector(edgeTwo.cross(edgeOne));
@@ -288,8 +275,6 @@ bool Triangle::intersect(Ray& ray, float* thit, LocalGeo* local) {
     }
     geomNormal.normalize();
     local->setNormal(geomNormal);
-    return true;
-  } else {
-    return false;
   }
+  return intersection;
 }

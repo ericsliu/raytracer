@@ -4,6 +4,12 @@
 #endif
 #include <string>
 
+class Color;
+class Light;
+class PointLight;
+class DirecLight;
+class Object;
+
 /* 
  * Class Color
  * three float for each color channel
@@ -30,8 +36,8 @@ class Light {
     Vector vector;
     Color color;
     std::string type;
-    virtual Light() = 0;
-    virtual Light(float,float,float,float,float,float) = 0;
+    Light();
+    Light(float,float,float,float,float,float);
     virtual void generateLightRay(LocalGeo&, Ray&, Color&) = 0;
 };
 
@@ -47,4 +53,27 @@ class DirecLight: public Light {
     DirecLight();
     DirecLight(float,float,float,float,float,float);
     void generateLightRay(LocalGeo&, Ray&, Color&);
+};
+
+/*
+ * Class Object - contains a shape and BRDF
+ */
+class Object {
+  public:
+    Shape* shape;
+    float ambr;
+    float ambg;
+    float ambb;
+    float difr;
+    float difg;
+    float difb;
+    float sper;
+    float speg;
+    float speb;
+    float refr;
+    float refg;
+    float refb;
+    Object();
+    Object(Shape*);
+    Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float);
 };

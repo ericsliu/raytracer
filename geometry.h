@@ -1,5 +1,13 @@
 #include <string>
 
+class Point;
+class Vector;
+class Ray;
+class LocalGeo;
+class Shape;
+class Sphere;
+class Triangle;
+
 /*
  * Class Point
  * Packages three floats together as a single 3-d point
@@ -23,15 +31,12 @@ class Point {
  */
 class Vector {
   public:
-    Point dir;
+    float x;
+    float y;
+    float z;
     Vector();
     Vector(float, float, float);
-    void setX(float x);
-    void setY(float y);
-    void setZ(float z);
-    float getX();
-    float getY();
-    float getZ();
+    Vector(Point);
     void scale(float k);
     void normalize();
     float norm();
@@ -70,11 +75,11 @@ class LocalGeo {
     Point pos;
     Vector normal;
     LocalGeo();
-    LocalGeo(Point, Normal);
+    LocalGeo(Point, Vector);
     void setPosition(Point);
-    void setNormal(Normal);
+    void setNormal(Vector);
     Point getPosition();
-    Normal getNormal();
+    Vector getNormal();
 };
 
 
@@ -83,22 +88,23 @@ class LocalGeo {
  */
 class Shape {
   public:
-    virtual bool intersect(Ray&) = 0;
-    virtual bool intersect(Ray&, float*, LocalGeo*) = 0;
+    float intersect(Ray&, float*);
+    float intersect(Ray&, float*, LocalGeo*);
 };
 
 /*
- * Class Circle
+ * Class Sphere
  */
-class Circle : public Shape {
+class Sphere : public Shape {
   public:
     Point center;
     float radius;
-    Circle();
-    Circle(Point, float);
-    bool intersect(Ray&);
-    bool intersect(Ray&, float*, LocalGeo*);
-    // bool intersect(Ray&, float*);
+    Sphere();
+    Sphere(Point, float);
+    float intersect(Ray&);
+    float intersect(Ray&, LocalGeo*);
+    //bool intersect(Ray&, float*);
+    //bool intersect(Ray&, float*, LocalGeo*);
 };
 
 /*
@@ -111,7 +117,8 @@ class Triangle : public Shape {
     Vector edgeTwo;
     Triangle();
     Triangle(Point, Point, Point);
-    bool intersect(Ray&);
-    bool intersect(Ray&, float*, LocalGeo*);
-    // bool intersect(Ray&, float*, float*, float*);
+    float intersect(Ray&);
+    float intersect(Ray&, LocalGeo*);
+    //bool intersect(Ray&, float*);
+    //bool intersect(Ray&, float*, LocalGeo*);
 };

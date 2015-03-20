@@ -49,33 +49,83 @@ void Color::sub(Color color) {
 /*
  * Class Light
  */
+Light::Light() {
+}
+
+Light::Light(float xVal, float yVal, float zVal, float red, float green, float blue) {
+}
+
 PointLight::PointLight() {
-  vector = Vector(); color = Color(); type = "point";
+  vector = Vector();
+  color = Color();
+  type = "point";
 }
 
 PointLight::PointLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
-  vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue); type = "point";
+  vector = Vector(xVal,yVal,zVal);
+  color = Color(red,green,blue);
+  type = "point";
 }
 
 void PointLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
-  Vector direction = vector.sub(local.getPosition());
-  tMax = direction.norm();
+  Vector direction = vector;
+  direction.sub(local.getPosition());
+  float tMax = direction.norm();
   direction.normalize();
   lray = Ray(local.getPosition(), direction, tMax);
   lcolor = color;
 }
 
 DirecLight::DirecLight() {
-  vector = Vector(); color = Color(); type = "directional";
+  vector = Vector();
+  color = Color();
+  type = "directional";
 }
 
 DirecLight::DirecLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
-  vector = Vector(xVal,yVal,zVal); color = Color(red,green,blue); type = "directional";
+  vector = Vector(xVal,yVal,zVal);
+  color = Color(red,green,blue);
+  type = "directional";
 }
 
 void DirecLight::generateLightRay(LocalGeo& local, Ray& lray, Color& lcolor) {
-  Vector dir = direction;
+  Vector dir = vector;
   dir.scale(-dir.norm());
   lray = Ray(local.getPosition(), dir);
   lcolor = color;
+}
+
+Object::Object() {
+}
+
+Object::Object(Shape* inShape) {
+  shape = inShape;
+  ambr = 0.7;
+  ambg = 0.7;
+  ambb = 0.7;
+  difr = 0.7;
+  difg = 0.7;
+  difb = 0.7;
+  sper = 0.7;
+  speg = 0.7;
+  speb = 0.7;
+  refr = 0.7;
+  refg = 0.7;
+  refb = 0.7;
+}
+
+Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
+  shape = inShape;
+  ambr = ar;
+  ambg = ag;
+  ambb = ab;
+  difr = dr;
+  difg = dg;
+  difb = db;
+  sper = sr;
+  speg = sg;
+  speb = sb;
+  refr = rr;
+  refg = rg;
+  refb = rb;
 }

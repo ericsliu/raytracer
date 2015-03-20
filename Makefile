@@ -11,10 +11,12 @@ endif
 	
 RM = /bin/rm -f 
 all: main
-main: light.o raytracer.o
-	$(CC) $(CFLAGS) raytracer.o light.o geometry.o -o raytracer $(LDFLAGS) 
-raytracer.o: raytracer.cpp light.o
+main: matrix.o light.o raytracer.o
+	$(CC) $(CFLAGS) raytracer.o matrix.o light.o geometry.o -o raytracer $(LDFLAGS) 
+raytracer.o: raytracer.cpp matrix.o light.o
 	$(CC) $(CFLAGS) -c raytracer.cpp -o raytracer.o
+matrix.o: matrix.cpp light.o geometry.o
+	$(CC) $(CFLAGS) -c matrix.cpp -o matrix.o
 light.o: light.cpp geometry.o
 	$(CC) $(CFLAGS) -c light.cpp -o light.o
 geometry.o: geometry.cpp
