@@ -179,6 +179,12 @@ void LocalGeo::setNormal(Vector n) {
   normal.normalize();
 }
 
+float Shape::intersect(Ray& ray) {
+}
+
+float Shape::intersect(Ray& ray, LocalGeo* geo) {
+}
+
 Sphere::Sphere() {
   center = Point();
   radius = 1;
@@ -271,11 +277,14 @@ float Triangle::intersect(Ray& ray, LocalGeo* local) {
     Vector triNormal = Vector(edgeOne.cross(edgeTwo));
     triNormal.normalize();
     Vector geomNormal;
+    /*
     if (ray.dir.dot(triNormal) > 0.0){
       geomNormal = Vector(edgeTwo.cross(edgeOne));
     } else {
       geomNormal = Vector(edgeOne.cross(edgeTwo));
     }
+    */
+    geomNormal = Vector(edgeOne.cross(edgeTwo));
     geomNormal.normalize();
     local->setNormal(geomNormal);
   }

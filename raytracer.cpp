@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <limits.h>
+#include <limits>
 #include <sstream>
 #include <fstream>
 
@@ -63,18 +63,17 @@ class Viewport {
 //****************************************************
 Viewport viewport;
 Point camera = Point(0, 0, 0);
-Point ul = Point(-0.5, 0.5, 0.5);
-Point ll = Point(-0.5, -0.5, 0.5);
-Point ur = Point(0.5, 0.5, 0.5);
-Point lr = Point(0.5, -0.5, 0.5);
+Point ul = Point(-0.5, 0.5, -0.5);
+Point ll = Point(-0.5, -0.5, -0.5);
+Point ur = Point(0.5, 0.5, -0.5);
+Point lr = Point(0.5, -0.5, -0.5);
 Color ambient;
 Color diffuse;
 Color specular;
 Color shade;
 Vector point;
-float p = 40;
+float power = 64;
 std::vector<Light*> lights;
-std::vector<Point> objPoints;
 std::vector<Object> objects;
 //std::vector<
 
@@ -141,6 +140,21 @@ void loadObjs() {
   /*
   for (int i = 0; i < objPoints.size(); i++) {
     cout << objPoints[i].x << " " << objPoints[i].y << " " << objPoints[i].z << endl;
+  }
+  */
+  /*
+  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
+  Object sphereObj = Object(&testSphere, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
+  objects.reserve(sizeof(Object));
+  objects.push_back(sphereObj);
+  DirecLight testLight = DirecLight(0.25, 0.25, 0.25, 1, 1, 1);
+  lights.reserve(sizeof(Light));
+  lights.push_back(&testLight);
+  printf("run 1: size %d\n", lights.size());
+  for (int l = 0; l < lights.size(); l++) {
+    printf("run 1: item %d\n", l);
+    cout << "type is " << lights[l]->type << endl;
+    //printf("type is %s\n", lights[l]->type);
   }
   */
 }
@@ -218,16 +232,6 @@ void tests() {
   testInvMatrix.array[3][3] = 1;
   testInvMatrix.printMatrix();
   testInvMatrix.inv().printMatrix();
-}
-
-//****************************************************
-// Mouse click callback
-//****************************************************
-void mouseClick(int button, int state, int x, int y) {
-  if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-    //lights.push_back(Light((float)(5*(x - (WINDOW_WIDTH / 2))/WINDOW_WIDTH), (float)(5*(-y + (WINDOW_HEIGHT / 2))/WINDOW_HEIGHT), pointZ, pointR, pointG, pointB, true));
-    glutPostRedisplay();
-  }
 }
 
 //****************************************************
@@ -315,7 +319,7 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
 //****************************************************
 
 
-void circle(float centerX, float centerY, float radius) {
+void sample(float centerX, float centerY, float radius) {
   glBegin(GL_POINTS);
 
   int i,j;  // Pixel indices
@@ -331,19 +335,150 @@ void circle(float centerX, float centerY, float radius) {
 
   printf("w = %d, h = %d", viewport.w, viewport.h);
   printf("xStep = %f, yStep = %f\n", xStep, yStep);
+  
+  /*
+  printf("run 2: size %d\n", lights.size());
+  for (int l = 0; l < lights.size(); l++) {
+    printf("run 2: item %d\n", l);
+    cout << "type is " << lights[l]->type << endl;
+  }
+  */
 
-  Vector cameraDir = Vector(0, 0, 1.0);
-  Sphere testSphere = Sphere(Point(0.0, 0.0, 5.0), 2.0);
-  DirecLight testLight = DirecLight(0.25, 0.25, 0.25, 1, 1, 1);
+  objects.clear();
+  lights.clear();
+  Vector cameraDir = Vector(0, 0, -1.0);
+  Sphere testSphere = Sphere(Point(0.0, 0.0, -5.0), 2.0);
+  Object sphereObj = Object(&testSphere, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
+  objects.push_back(sphereObj);
+  Triangle testTriangle = Triangle(Point(-3, 0, -5), Point(0, 0, -5), Point(-2, 1, 0));
+  Object triangleObj = Object(&testTriangle, 0.1, 0.1, 0.1, 0.1, 0.8, 0.5, 0.6, 0.0, 0.3, 0, 0, 0);
+  objects.push_back(triangleObj);
+  DirecLight testDLight = DirecLight(0.25, 0.25, -0.25, 0, 1, 1);
+  lights.push_back(&testDLight);
+  PointLight testPLight = PointLight(7, 0, -5.0, 1, 1, 0);
+  lights.push_back(&testPLight);
+
+  /*
+  Ray testRay = Ray(Point(0, 0, 0), Vector(-0.1, -0.1, -1));
+  LocalGeo geoTest = LocalGeo();
+  LocalGeo* geoTestPointer = &geoTest;
+  hitPoint = testTriangle.intersect(testRay, geoTestPointer);
+  */
+
+  printf("objects is %d\n", objects.size());
   LocalGeo geo = LocalGeo();
   LocalGeo* geoPointer = &geo;
   for (i = 0; i < viewport.w; i++) {
     for (j = 0; j < viewport.h; j++) {
       // send out a ray
-      Point viewPlanePoint = Point(i * xStep - 0.5, j * yStep - 0.5, 1);
+      Point viewPlanePoint = Point(i * xStep - 0.5, j * yStep - 0.5, -1);
       Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera), 8.0);
-      Ray lightRay;
       Color pixColor = Color();
+      float bestHit = std::numeric_limits<float>::infinity();
+      int nearestObj = 0;
+      bool hit = false;
+      for (int o = 0; o < objects.size(); o++) {
+        Color lightColor = Color();
+        float hitPoint = objects[o].shape->intersect(sampleRay, geoPointer);
+        float hitLight;
+        if (hitPoint != -1.0 && hitPoint < bestHit) {
+          bestHit = hitPoint;
+          nearestObj = o;
+          hit = true;
+        }
+      }
+      if (hit) {
+        Color lightColor = Color();
+        float hitPoint = objects[nearestObj].shape->intersect(sampleRay, geoPointer);
+        float hitLight;
+        Ray lightRay;
+        for (int l = 0; l < lights.size(); l++) {
+          bool blocked = false;
+          lights[l]->generateLightRay(geoPointer, lightRay, lightColor);
+          // check to see if light hits object
+          for (int lo = 0; lo < objects.size(); lo++) {
+            hitLight = objects[nearestObj].shape->intersect(lightRay);
+            if (hitLight != -1.0) {
+              blocked = true;
+              break;
+            }
+          }
+          if (!blocked) {
+            Vector lightNeg = lightRay.dir;
+            lightNeg.normalize();
+            //diffuse
+            Color difColor = objects[nearestObj].diffuse;
+            difColor.mul(lightColor);
+            difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
+            //if(nearestObj == 1) printf("dif adds: (%f, %f, %f)\n", difColor.r, difColor.g, difColor.b);
+            pixColor.add(difColor);
+            //if(nearestObj == 1) printf("after dif: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+            //specular
+            Color speColor = objects[nearestObj].specular;
+            speColor.mul(lightColor);
+            Vector r = geoPointer->normal;
+            Vector v = sampleRay.dir;
+            v.scale(-1);
+            r.scale(lightNeg.dot(geoPointer->normal) * 2);
+            r.sub(lightNeg);
+            r.normalize();
+            speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
+            pixColor.add(speColor);
+            //if(nearestObj == 1) printf("after spe: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+          }
+        }
+      }
+      setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
+
+      /*
+      for (int o = 0; o < objects.size(); o++) {
+        Ray lightRay;
+        Color lightColor = Color();
+        float hitPoint = objects[o].shape->intersect(sampleRay, geoPointer);
+        float hitLight;
+        if (hitPoint != -1.0) {
+          //ambient
+          pixColor.add(objects[nearestObj].ambient);
+          //Point tempPoint = sampleRay.at(hitPoint);
+          for (int l = 0; l < lights.size(); l++) {
+            bool blocked = false;
+            lights[l]->generateLightRay(geoPointer, lightRay, lightColor);
+            // check to see if light hits object
+            for (int lo = 0; lo < objects.size(); lo++) {
+              hitLight = objects[o].shape->intersect(lightRay);
+              if (hitLight != -1.0) {
+                blocked = true;
+                break;
+              }
+            }
+            if (!blocked) {
+              //lightNeg.scale(-1);
+              Vector lightNeg = lightRay.dir;
+              lightNeg.normalize();
+              //diffuse
+              Color difColor = objects[o].diffuse;
+              difColor.mul(lightColor);
+              difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
+              pixColor.add(difColor);
+              //specular
+              Color speColor = objects[o].specular;
+              speColor.mul(lightColor);
+              Vector r = geoPointer->normal;
+              Vector v = sampleRay.dir;
+              v.scale(-1);
+              r.scale(lightNeg.dot(geoPointer->normal) * 2);
+              r.sub(lightNeg);
+              r.normalize();
+              speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
+              pixColor.add(speColor);
+            }
+          }
+          break;
+        }
+      }
+      */
+      /*
+      Ray lightRay;
       Color lightColor = Color();
       float hitPoint = testSphere.intersect(sampleRay, geoPointer);
       float hitLight;
@@ -353,28 +488,10 @@ void circle(float centerX, float centerY, float radius) {
       pixColor.add(amb);
       if (hitPoint != -1.0) {
         Point tempPoint = sampleRay.at(hitPoint);
-        //printf("hitPoint = %f, interPoint = (%f, %f, %f)\n", hitPoint, tempPoint.x, tempPoint.y, tempPoint.z);
         testLight.generateLightRay(geoPointer, lightRay, lightColor);
         //printf("lightRay: origin = (%f, %f, %f)  dir = (%f, %f, %f)\n", lightRay.origin.x, lightRay.origin.y, lightRay.origin.z, lightRay.dir.x, lightRay.dir.y, lightRay.dir.z);
         hitLight = testSphere.intersect(lightRay);
-        //printf("hitlight = %f\n", hitLight);
-        /*
-        float tempR = 0;
-        float tempG = 0;
-        float tempB = 0;
-        if (geoPointer->normal.x > 0) {
-          tempR = 1;
-        }
-        if (geoPointer->normal.y > 0) {
-          tempG = 1;
-        }
-        if (geoPointer->normal.z < -0.5) {
-          tempB = 1;
-        }
-        setPixel(i, j, tempR, tempG, tempB);
-        */
         if (hitLight == -1.0) {
-          //setPixel(i, j, (geoPointer->normal.x / 2) + 0.25, (geoPointer->normal.y / 2) + 0.25, geoPointer->normal.z);
           Vector lightNeg = testLight.vector;
           lightNeg.scale(-1);
           lightNeg.normalize();
@@ -405,6 +522,7 @@ void circle(float centerX, float centerY, float radius) {
       } else {
         setPixel(i, j, 0, 0, 0);
       }
+      */
     }
   }
 
@@ -414,47 +532,6 @@ void circle(float centerX, float centerY, float radius) {
   float hitPoint = testSphere.intersect(testRay);
   */
 
-/*
-  Vector center = Vector(centerX,centerY,0);
-
-  for (i=0;i<viewport.w;i++) {
-    for (j=0;j<viewport.h;j++) {
-      // Location of the center of pixel relative to center of sphere
-      float x = (i+0.5-centerX);
-      float y = (j+0.5-centerY);
-
-      float dist = sqrt(sqr(x) + sqr(y));
-
-      if (dist<=radius) {
-        shade = Color();
-        // This is the front-facing Z coordinate
-        float z = sqrt(radius*radius-dist*dist);
-
-        point = Vector(x,y,z);
-        Light light;
-        Vector r;
-        Vector v = Vector(0,0,1);
-        Vector normal;
-        Vector vector;
-        for (int i = 0; i < lights.size() ; i++) {
-          light = lights[i];
-          normal = point;
-          normal.normalize();
-          if (light.type == "point") {
-            vector = light.vector + (-1*normal);
-          } else {
-            vector = -1*light.vector;
-          }
-          vector.normalize();
-          r = (-1*vector) + normal*2*(vector*normal);
-          r.normalize();
-          shade = shade + ambient*light.color + diffuse*light.color * std::max(vector*normal,0.0f) + specular*light.color * pow(std::max(r*v,0.0f),p);
-        }
-
-        setPixel(i,j, shade.r, shade.g, shade.b);
-      }
-    }
-  }*/
   glEnd();
 }
 //****************************************************
@@ -468,7 +545,7 @@ void myDisplay() {
   glLoadIdentity();				        // make sure transformation is "zero'd"
 
   // Start drawing
-  circle(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) * 0.45);
+  sample(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) * 0.45);
 
   glFlush();
   glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -518,7 +595,6 @@ int main(int argc, char *argv[]) {
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);				// function to run when the window gets resized
   glutIdleFunc(myIdle);             // function to run when not handling any other task
-  glutMouseFunc(mouseClick);        // function to run when mouse is clicked
 
   // ********* Tests *********
 

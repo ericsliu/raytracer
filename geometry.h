@@ -88,8 +88,8 @@ class LocalGeo {
  */
 class Shape {
   public:
-    float intersect(Ray&, float*);
-    float intersect(Ray&, float*, LocalGeo*);
+    virtual float intersect(Ray&);
+    virtual float intersect(Ray&, LocalGeo*);
 };
 
 /*
