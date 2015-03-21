@@ -89,9 +89,9 @@ void initScene() {
 //****************************************************
 // Load necessary objects
 //****************************************************
-void loadObjs() {
+void loadObjs(std::string filename) {
   /*
-  std::ifstream infile("icosahedron.obj");
+  std::ifstream infile(filename);
   std::string line;
 
   if (infile.is_open()) {
@@ -286,6 +286,130 @@ void argParser(int argc, char *argv[]){ // TODO: Handle errors if input configur
   */
 }
 
+void loadScene() {
+  std::ifstream infile("raytracer.scn");
+  std::string line;
+
+  Matrix transform = Matrix();
+
+  if (infile.is_open()) {
+    while (std::getline(infile,line)) {
+      std::istringstream lineStream(line);
+      std::vector< std::string > params;
+      std::string token;
+      while(std::getline(lineStream, token, ' ')) {
+        if (token.size()==0) continue;
+        else if (token[0]=='#') break;
+        else params.push_back(token);
+      }
+
+      if (params.size()<1) continue;
+      
+      // Parser the arguments
+      if (params[0].compare("cam") == 0) {
+        Point e = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        Point ll = Point(atof(params[4].c_str()), atof(params[5].c_str()), atof(params[6].c_str()));
+        Point lr = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
+        Point ul = Point(atof(params[10].c_str()), atof(params[11].c_str()), atof(params[12].c_str()));
+        Point ur = Point(atof(params[13].c_str()), atof(params[14].c_str()), atof(params[15].c_str()));
+        // TODO: Initialize Camera or something
+      }
+      else if (params[0].compare("sph") == 0) {
+        Sphere* sph;
+        Point center = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        float radius = atof(params[4].c_str());
+        sph = new Sphere(center,radius);
+        // TODO: Initialize primitive with sphere and transform
+      }
+      else if (params[0].compare("tri") == 0) {
+        Triangle* tri;
+        Point point1 = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        Point point2 = Point(atof(params[4].c_str()), atof(params[5].c_str()), atof(params[6].c_str()));
+        Point point3 = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
+        tri = new Triangle(point1,point2,point3);
+        // TODO: Initialize primitive with triangle and transform
+      }
+      else if (params[0].compare("obj") == 0) {
+        loadObjs(params[1]);
+        // TODO: Figure out how to apply transform to model loaded from obj file
+      }
+      else if (params[0].compare("ltp") == 0) {
+        PointLight* pl;
+        float x = atof(params[1].c_str());
+        float y = atof(params[2].c_str());
+        float z = atof(params[3].c_str());
+        float r = atof(params[4].c_str());
+        float g = atof(params[5].c_str());
+        float b = atof(params[6].c_str());
+        pl = new PointLight(x, y, z, r, g, b); 
+        // TODO: add to a list of lights
+      }
+      else if (params[0].compare("ltd") == 0) {
+        PointLight* dl;
+        float x = atof(params[1].c_str());
+        float y = atof(params[2].c_str());
+        float z = atof(params[3].c_str());
+        float r = atof(params[4].c_str());
+        float g = atof(params[5].c_str());
+        float b = atof(params[6].c_str());
+        dl = new DirecLight(x, y, z, r, g, b); 
+        // TODO: add to a list of lights
+      }
+      else if (params[0].compare("lta") == 0) {
+        PointLight* al;
+        float r = atof(params[4].c_str());
+        float g = atof(params[5].c_str());
+        float b = atof(params[6].c_str());
+        al = new AmbieLight(r, g, b); 
+        // TODO: add to a list of lights
+      }
+      else if (params[0].compare("mat") == 0) {
+        float ambientColor[3];
+        ambientColor = atof(params[1].c_str());
+        ambientColor = atof(params[2].c_str());
+        ambientColor = atof(params[3].c_str());
+
+        float diffuseColor[3];
+        diffuseColor = atof(params[4].c_str());
+        diffuseColor = atof(params[5].c_str());
+        diffuseColor = atof(params[6].c_str());
+
+        float specularColor[3];
+        specularColor = atof(params[7].c_str());
+        specularColor = atof(params[8].c_str());
+        specularColor = atof(params[9].c_str());
+
+        float specular = atof(params[10].c_str());
+
+        float reflectiveColor[3];
+        reflectiveColor = atof(params[11].c_str());
+        reflectiveColor = atof(params[12].c_str());
+        reflectiveColor = atof(params[13].c_str());
+
+        // TODO: Initialize the BRDF
+      }
+      else if (params[0].compare("xft") == 0) {
+        Vector t = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        transform.mul(Matrix(t, translation=true));
+      }
+      else if (params[0].compare("xfr") == 0) {
+        // TODO: Convert exponential rotations to matrix rotation
+      }
+      else if (params[0].compare("xfs") == 0) {
+        Vector s = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        transform.mul(Matrix(s));
+      }
+      else if (params[0].compare("xfz") == 0) {
+        transform = Matrix();
+      }
+      else std::cout<<"Unrecognized parameter: "<<params[0]<<std::endl;
+    }
+    infile.close();
+  } else {
+    std::cout<<"Can't open file!"<<std::endl; 
+  }
+}
+
 //****************************************************
 // reshape viewport if the window is resized
 //****************************************************
@@ -465,7 +589,7 @@ int main(int argc, char *argv[]) {
   //tests();
 
   // Load up .obj files
-  loadObjs();
+  // loadObjs();
 
   //This initializes glut
   glutInit(&argc, argv);

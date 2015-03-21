@@ -21,22 +21,30 @@ Matrix::Matrix() {
   }
 }
 
-Matrix::Matrix(Point point) {
+Matrix::Matrix(Point point, bool translation=false) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       if (x == y) {
         if (x == 0) {
-          array[y][x] = point.x;
+          if (!translation) array[y][x] = point.x;
+          else array[y][x] = 1;
         }
         else if (x == 1) {
-          array[y][x] = point.y;
+          if (!translation) array[y][x] = point.y;
+          else array[y][x] = 1;
         }
         else if (x == 2) {
-          array[y][x] = point.z;
+          if (!translation) array[y][x] = point.z;
+          else array[y][x] = 1;
         }
         else {
           array[y][x] = 1;
         }
+      }
+      else if (translation and x == 3) {
+        if (y == 0) array[y][x] = point.x;
+        else if (y == 1) array[y][x] = point.y;
+        else if (y == 2) array[y][x] = point.z;
       }
       else {
         array[y][x] = 0;
@@ -45,28 +53,55 @@ Matrix::Matrix(Point point) {
   }
 }
 
-Matrix::Matrix(Vector vector) {
+Matrix::Matrix(Vector vector, bool translation=false) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       if (x == y) {
         if (x == 0) {
-          array[y][x] = vector.x;
+          if (!translation) array[y][x] = vector.x;
+          else array[y][x] = 1;
         }
         else if (x == 1) {
-          array[y][x] = vector.y;
+          if (!translation) array[y][x] = vector.y;
+          else array[y][x] = 1;
         }
         else if (x == 2) {
-          array[y][x] = vector.z;
+          if (!translation) array[y][x] = vector.z;
+          else array[y][x] = 1;
         }
         else {
           array[y][x] = 1;
         }
+      }
+      else if (translation and x == 3) {
+        if (y == 0) array[y][x] = vector.x;
+        else if (y == 1) array[y][x] = vector.y;
+        else if (y == 2) array[y][x] = vector.z;
       }
       else {
         array[y][x] = 0;
       }
     }
   }
+}
+
+Matrix::Matrix(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float t0=0, float t1=0, float t2=0) {
+  array[0][0] = m00;
+  array[0][1] = m01;
+  array[0][2] = m02;
+  array[1][0] = m10;
+  array[1][1] = m11;
+  array[1][2] = m12;
+  array[2][0] = m20;
+  array[2][1] = m21;
+  array[2][2] = m22;
+  array[3][0] = 0;
+  array[3][1] = 0;
+  array[3][2] = 0;
+  array[3][3] = 1;
+  array[0][3] = t0;
+  array[1][3] = t1;
+  array[2][3] = t2;
 }
 
 void Matrix::printMatrix() {
@@ -94,12 +129,26 @@ Matrix Matrix::mul(Matrix b) {
   return product;
 }
 
-Vector Matrix::mul(Vector v) {
-  //TODO: multiply a transformation matrix with the vector respresenting a point
+Vector Matrix::mul(Vector b) {
+  float temp[3];
+  for (int y = 0; y < 3; y++) { // row of matrix A to use
+    temp[y] = array[y][0]*b.xVal + array[y][1]*b.yVal + array[y][2]*b.zVal;
+  }
+  return Vector(temp[0],temp[1],temp[2]);
 }
 
-Matrix Matrix::rotate(Ray ray) {
-  //TODO: create the matrix which represents the exponential map rotation 'ray' and multiply this matrix by it, returning the result
+Point Matrix::mul(Point b) {
+  float temp[3];
+  for (int y = 0; y < 3; y++) { // row of matrix A to use
+    temp[y] = array[y][0]*b.xVal + array[y][1]*b.yVal + array[y][2]*b.zVal + array[y][3];
+  }
+  return Point(temp[0],temp[1],temp[2]);
+}
+
+Ray Matrix::mul(Ray b) {
+  Point o = mul(b.origin);
+  Vector d = mul(b.dir);
+  return Ray(o,d);
 }
 
 Matrix Matrix::inv() {
@@ -154,3 +203,5 @@ Matrix Matrix::inv() {
   }
   return inverse;
 }
+
+
