@@ -179,6 +179,12 @@ void LocalGeo::setNormal(Vector n) {
   normal.normalize();
 }
 
+float Shape::intersect(Ray& ray) {
+}
+
+float Shape::intersect(Ray& ray, LocalGeo* geo) {
+}
+
 Sphere::Sphere() {
   center = Point();
   radius = 1;

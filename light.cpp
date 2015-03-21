@@ -8,7 +8,7 @@
  * Class Color
  */
 Color::Color() {
-  r = 1; g = 1; b = 1;
+  r = 0; g = 0; b = 0;
 }
 
 Color::Color(float red, float green, float blue) {
@@ -77,7 +77,6 @@ PointLight::PointLight() {
 
 PointLight::PointLight(float xVal, float yVal, float zVal, float red, float green, float blue) {
   vector = Vector(xVal,yVal,zVal);
-  vector.normalize();
   color = Color(red,green,blue);
   type = "point";
 }
