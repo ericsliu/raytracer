@@ -90,6 +90,7 @@ void initScene() {
 // Load necessary objects
 //****************************************************
 void loadObjs() {
+  /*
   std::ifstream infile("icosahedron.obj");
   std::string line;
 
@@ -135,7 +136,7 @@ void loadObjs() {
   } else {
     std::cout<<"Can't open file!"<<std::endl; 
   }
-  /*
+  */
   // CODE TO ENSURE PARSING .obj WORKS
   /*
   for (int i = 0; i < objPoints.size(); i++) {
@@ -330,20 +331,13 @@ void sample(float centerX, float centerY, float radius) {
   int minJ = max(0,(int)floor(centerY-radius));
   int maxJ = min(viewport.h-1,(int)ceil(centerY+radius));
 
-  float xStep = 1.0 / viewport.w;
-  float yStep = 1.0 / viewport.h;
+  float yStep = (ul.y - ll.y) / viewport.h;
+  float xStep = (lr.x - ll.x) / viewport.w;
+  //float xStep = 1.0 / viewport.w;
 
   printf("w = %d, h = %d", viewport.w, viewport.h);
   printf("xStep = %f, yStep = %f\n", xStep, yStep);
   
-  /*
-  printf("run 2: size %d\n", lights.size());
-  for (int l = 0; l < lights.size(); l++) {
-    printf("run 2: item %d\n", l);
-    cout << "type is " << lights[l]->type << endl;
-  }
-  */
-
   objects.clear();
   lights.clear();
   Vector cameraDir = Vector(0, 0, -1.0);
@@ -358,25 +352,19 @@ void sample(float centerX, float centerY, float radius) {
   PointLight testPLight = PointLight(7, 0, -5.0, 1, 1, 0);
   lights.push_back(&testPLight);
 
-  /*
-  Ray testRay = Ray(Point(0, 0, 0), Vector(-0.1, -0.1, -1));
-  LocalGeo geoTest = LocalGeo();
-  LocalGeo* geoTestPointer = &geoTest;
-  hitPoint = testTriangle.intersect(testRay, geoTestPointer);
-  */
-
   printf("objects is %d\n", objects.size());
   LocalGeo geo = LocalGeo();
   LocalGeo* geoPointer = &geo;
   for (i = 0; i < viewport.w; i++) {
     for (j = 0; j < viewport.h; j++) {
       // send out a ray
-      Point viewPlanePoint = Point(i * xStep - 0.5, j * yStep - 0.5, -1);
+      Point viewPlanePoint = Point((i - centerX) * xStep, (j - centerY) * yStep, -1);
       Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera), 8.0);
       Color pixColor = Color();
       float bestHit = std::numeric_limits<float>::infinity();
       int nearestObj = 0;
       bool hit = false;
+      // loop to find nearest object
       for (int o = 0; o < objects.size(); o++) {
         Color lightColor = Color();
         float hitPoint = objects[o].shape->intersect(sampleRay, geoPointer);
@@ -410,9 +398,7 @@ void sample(float centerX, float centerY, float radius) {
             Color difColor = objects[nearestObj].diffuse;
             difColor.mul(lightColor);
             difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
-            //if(nearestObj == 1) printf("dif adds: (%f, %f, %f)\n", difColor.r, difColor.g, difColor.b);
             pixColor.add(difColor);
-            //if(nearestObj == 1) printf("after dif: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
             //specular
             Color speColor = objects[nearestObj].specular;
             speColor.mul(lightColor);
@@ -424,105 +410,11 @@ void sample(float centerX, float centerY, float radius) {
             r.normalize();
             speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
             pixColor.add(speColor);
-            //if(nearestObj == 1) printf("after spe: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
+            // TODO: REFLECTIONS
           }
         }
       }
       setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
-
-      /*
-      for (int o = 0; o < objects.size(); o++) {
-        Ray lightRay;
-        Color lightColor = Color();
-        float hitPoint = objects[o].shape->intersect(sampleRay, geoPointer);
-        float hitLight;
-        if (hitPoint != -1.0) {
-          //ambient
-          pixColor.add(objects[nearestObj].ambient);
-          //Point tempPoint = sampleRay.at(hitPoint);
-          for (int l = 0; l < lights.size(); l++) {
-            bool blocked = false;
-            lights[l]->generateLightRay(geoPointer, lightRay, lightColor);
-            // check to see if light hits object
-            for (int lo = 0; lo < objects.size(); lo++) {
-              hitLight = objects[o].shape->intersect(lightRay);
-              if (hitLight != -1.0) {
-                blocked = true;
-                break;
-              }
-            }
-            if (!blocked) {
-              //lightNeg.scale(-1);
-              Vector lightNeg = lightRay.dir;
-              lightNeg.normalize();
-              //diffuse
-              Color difColor = objects[o].diffuse;
-              difColor.mul(lightColor);
-              difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
-              pixColor.add(difColor);
-              //specular
-              Color speColor = objects[o].specular;
-              speColor.mul(lightColor);
-              Vector r = geoPointer->normal;
-              Vector v = sampleRay.dir;
-              v.scale(-1);
-              r.scale(lightNeg.dot(geoPointer->normal) * 2);
-              r.sub(lightNeg);
-              r.normalize();
-              speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
-              pixColor.add(speColor);
-            }
-          }
-          break;
-        }
-      }
-      */
-      /*
-      Ray lightRay;
-      Color lightColor = Color();
-      float hitPoint = testSphere.intersect(sampleRay, geoPointer);
-      float hitLight;
-      //ambient
-      Color amb = Color(0.1, 0.1, 0.1);
-      amb.mul(lightColor);
-      pixColor.add(amb);
-      if (hitPoint != -1.0) {
-        Point tempPoint = sampleRay.at(hitPoint);
-        testLight.generateLightRay(geoPointer, lightRay, lightColor);
-        //printf("lightRay: origin = (%f, %f, %f)  dir = (%f, %f, %f)\n", lightRay.origin.x, lightRay.origin.y, lightRay.origin.z, lightRay.dir.x, lightRay.dir.y, lightRay.dir.z);
-        hitLight = testSphere.intersect(lightRay);
-        if (hitLight == -1.0) {
-          Vector lightNeg = testLight.vector;
-          lightNeg.scale(-1);
-          lightNeg.normalize();
-          if (i == 400 && j == 400) {
-            printf("ambi: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
-          }
-          //diffuse
-          Color difColor = Color(0.7, 0.1, 0.7);
-          difColor.mul(lightColor);
-          difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
-          pixColor.add(difColor);
-          if (i == 400 && j == 400) {
-            printf("diff: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
-          }
-          //specular
-          Color speColor = Color(0.8, 0.8, 0.4);
-          speColor.mul(lightColor);
-          Vector speVector = geoPointer->normal;
-          speVector.scale(lightNeg.dot(geoPointer->normal) * 2);
-          speVector.add(testLight.vector);
-          speColor.scale(pow(std::max(speVector.dot(sampleRay.dir), 0.0f), p));
-          pixColor.add(speColor);
-          if (i == 400 && j == 400) {
-            printf("spec: Color in center is (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
-          }
-        }
-        setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
-      } else {
-        setPixel(i, j, 0, 0, 0);
-      }
-      */
     }
   }
 

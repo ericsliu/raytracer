@@ -94,7 +94,12 @@ Matrix Matrix::mul(Matrix b) {
   return product;
 }
 
+Vector Matrix::mul(Vector v) {
+  //TODO: multiply a transformation matrix with the vector respresenting a point
+}
+
 Matrix Matrix::rotate(Ray ray) {
+  //TODO: create the matrix which represents the exponential map rotation 'ray' and multiply this matrix by it, returning the result
 }
 
 Matrix Matrix::inv() {
