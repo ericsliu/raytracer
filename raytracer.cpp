@@ -318,8 +318,8 @@ void sample(float centerX, float centerY, float radius) {
   Sphere testSphere = Sphere(Point(0.0, 0.0, -5.0), 2.0);
   Object sphereObj = Object(&testSphere, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
   objects.push_back(sphereObj);
-  Triangle testTriangle = Triangle(Point(-3, 0, -2), Point(0, 0, -2), Point(-2, 4, -6));
-  Object triangleObj = Object(&testTriangle, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
+  Triangle testTriangle = Triangle(Point(-3, 0, -5), Point(0, 0, -5), Point(-2, 1, 0));
+  Object triangleObj = Object(&testTriangle, 0.1, 0.1, 0.1, 0.1, 0.8, 0.5, 0.6, 0.0, 0.3, 0, 0, 0);
   objects.push_back(triangleObj);
   DirecLight testDLight = DirecLight(0.25, 0.25, -0.25, 0, 1, 1);
   lights.push_back(&testDLight);
@@ -378,7 +378,9 @@ void sample(float centerX, float centerY, float radius) {
             Color difColor = objects[nearestObj].diffuse;
             difColor.mul(lightColor);
             difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
+            //if(nearestObj == 1) printf("dif adds: (%f, %f, %f)\n", difColor.r, difColor.g, difColor.b);
             pixColor.add(difColor);
+            //if(nearestObj == 1) printf("after dif: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
             //specular
             Color speColor = objects[nearestObj].specular;
             speColor.mul(lightColor);
@@ -390,9 +392,11 @@ void sample(float centerX, float centerY, float radius) {
             r.normalize();
             speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
             pixColor.add(speColor);
+            //if(nearestObj == 1) printf("after spe: (%f, %f, %f)\n", pixColor.r, pixColor.g, pixColor.b);
           }
         }
       }
+      setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
 
       /*
       for (int o = 0; o < objects.size(); o++) {
@@ -441,7 +445,6 @@ void sample(float centerX, float centerY, float radius) {
         }
       }
       */
-      setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
       /*
       Ray lightRay;
       Color lightColor = Color();
