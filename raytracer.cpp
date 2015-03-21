@@ -93,19 +93,50 @@ void initScene() {
 void loadObjs() {
   std::ifstream infile("icosahedron.obj");
   std::string line;
-  /*
-  while (std::getline(infile, line)) {
-    //cout << "\n" << line;
-    if (line.size() > 0 && line.at(0) == 'v') {
-      std::istringstream split(line);
-      std::string type;
-      float x, y, z;
-      if (!(split >> type >> x >> y >> z)) {
-        break;
+
+  if (infile.is_open()) {
+    while (std::getline(infile,line)) {
+      std::istringstream lineStream(line);
+      std::vector< std::string > params;
+      std::string token;
+      while(std::getline(lineStream, token, ' ')) {
+        if (token.size()==0) continue;
+        else if (token[0]=='#') break;
+        else params.push_back(token);
       }
-      objPoints.push_back(Point(x, y, z));
+
+      if (params.size()<1) continue;
+      
+      if (params[0].compare("v") == 0) {
+        float z;
+        if (params.size()>3) z = std::atof(params[3].c_str());
+        else z = 0.0;
+        float x = std::atof(params[1].c_str());
+        float y = std::atof(params[2].c_str());
+        objPoints.push_back(Point(x,y,z));
+      }
+      else if (params[0].compare("f") == 0) {
+        int indices[3];
+        int count = 0;
+        for (unsigned int k=1; k < params.size(); ++k){
+          std::stringstream triangleStream(params[k]);
+          std::string index;
+          if (std::getline(triangleStream, index, '/')){
+            indices[count] = std::atoi(index.c_str())-1;
+            count += 1;
+          }
+        }
+        if (count > 3) std::cout<<"Parser doesn't support polygons with more than 3 vertices!"<<std::endl;
+        Triangle* triangle = new Triangle(objPoints[indices[0]],objPoints[indices[1]],objPoints[indices[2]]);
+        // TODO: Add these triangles to some primitive...
+      }
+      else std::cout<<"Unrecognized parameter: "<<params[0]<<std::endl;
     }
-  }*/
+    infile.close();
+  } else {
+    std::cout<<"Can't open file!"<<std::endl; 
+  }
+  /*
   // CODE TO ENSURE PARSING .obj WORKS
   /*
   for (int i = 0; i < objPoints.size(); i++) {
@@ -113,6 +144,7 @@ void loadObjs() {
   }
   */
 }
+
 
 //****************************************************
 // Tests that can be run
