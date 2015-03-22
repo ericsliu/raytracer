@@ -70,17 +70,19 @@ class AmbieLight: public Light {
 class Object {
   public:
     std::vector< Shape* > shape;
+    Matrix transform;
     Color ambient;
     Color diffuse;
     Color specular;
     Color reflective;
     Object();
     Object(std::vector< Shape* >);
-    Object(std::vector< Shape* >, Color, Color, Color, Color);
-    Object(std::vector< Shape* >, float, float, float, float, float, float, float, float, float, float, float, float);
+    Object(std::vector< Shape* >, Color, Color, Color, float, Color);
+    Object(std::vector< Shape* >, float, float, float, float, float, float, float, float, float, float, float, float, float);
     Object(Shape*);
-    Object(Shape*, Color, Color, Color, Color);
-    Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float);
+    Object(Shape*, Color, Color, Color, float, Color);
+    Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float, float);
     float intersect(Ray&);
     float intersect(Ray&, LocalGeo*);
+    void setTransform(Matrix&);
 };

@@ -67,10 +67,11 @@ Point ul = Point(-0.5, 0.5, -0.5);
 Point ll = Point(-0.5, -0.5, -0.5);
 Point ur = Point(0.5, 0.5, -0.5);
 Point lr = Point(0.5, -0.5, -0.5);
-Color ambient;
-Color diffuse;
-Color specular;
-Color shade;
+Color ambientColor = Color(0.7, 0.7, 0.7);
+Color diffuseColor = Color(0.7, 0.7, 0.7);
+Color specularColor = Color(0.7, 0.7, 0.7);
+float specularPower = 2;
+Color reflectiveColor = Color(0.7, 0.7, 0.7);
 Vector point;
 float power = 64;
 std::vector<Light*> lights;
@@ -89,7 +90,7 @@ void initScene() {
 //****************************************************
 // Load necessary objects
 //****************************************************
-void loadObjs(std::string filename) {
+void loadObjs(std::string filename, Matrix& transform) {
   std::vertex< Point > objPoints;
   std::vertex< Shape* > triangles;
   std::ifstream infile(filename);
@@ -135,8 +136,9 @@ void loadObjs(std::string filename) {
     }
     infile.close();
     if (triangles.size() > 0) {
-      objects.push_back(Object(triangles))
-      // TODO: Apply color to Obj files.
+      Object obj = Object(triangles, ambientColor, diffuseColor, specularColor, specularPower, reflectiveColor);
+      obj.setTransform(transform);
+      objects.push_back(obj);
     }
   } else {
     std::cout<<"Can't open file!"<<std::endl; 
@@ -256,7 +258,7 @@ void deletePoints() {
 //****************************************************
 // Function to parse input arguments to program
 //****************************************************
-void argParser(int argc, char *argv[]){ // TODO: Handle errors if input configuration is incorrect (e.g. r,g,b values missing)
+void argParser(int argc, char *argv[]){
   /*
   for (int i=1 ; i < argc ; ) {
     string arg;
@@ -264,13 +266,13 @@ void argParser(int argc, char *argv[]){ // TODO: Handle errors if input configur
     argstream << argv[i];
     argstream >> arg;
     if (arg == "-ka") {
-      ambient = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
+      ambientColor = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
       i += 4;
     } else if (arg == "-kd") {
-      diffuse = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
+      diffuseColor = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
       i += 4;
     } else if (arg == "-ks") {
-      specular = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
+      specularColor = Color(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]));
       i += 4;
     } else if (arg == "-sp") {
       p = atof(argv[i+1]);
@@ -281,7 +283,6 @@ void argParser(int argc, char *argv[]){ // TODO: Handle errors if input configur
     } else if (arg == "-dl") {
       lights.push_back(Light(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]),false));
       i += 7;
-    }
     else {
       cout << "Invalid input argument '" << argv[i] << "' ignored \n";
       i++;
@@ -322,7 +323,9 @@ void loadScene() {
         Point center = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
         float radius = atof(params[4].c_str());
         sph = new Sphere(center,radius);
-        // TODO: Initialize primitive with sphere and transform
+        Object obj = Object(sph, ambientColor, diffuseColor, specularColor, specularPower, reflectiveColor);
+        obj.setTransform(transform);
+        objects.push_back(obj);
       }
       else if (params[0].compare("tri") == 0) {
         Triangle* tri;
@@ -330,11 +333,12 @@ void loadScene() {
         Point point2 = Point(atof(params[4].c_str()), atof(params[5].c_str()), atof(params[6].c_str()));
         Point point3 = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
         tri = new Triangle(point1,point2,point3);
-        // TODO: Initialize primitive with triangle and transform
+        Object obj = Object(tri, ambientColor, diffuseColor, specularColor, specularPower, reflectiveColor);
+        obj.setTransform(transform);
+        objects.push_back(obj);
       }
       else if (params[0].compare("obj") == 0) {
-        loadObjs(params[1]);
-        // TODO: Figure out how to apply transform/color to model loaded from obj file
+        loadObjs(params[1], transform);
       }
       else if (params[0].compare("ltp") == 0) {
         PointLight* pl;
@@ -367,37 +371,37 @@ void loadScene() {
         lights.push_back(al);
       }
       else if (params[0].compare("mat") == 0) {
-        float ambientColor[3];
+        // These are globally accessible
         ambientColor = atof(params[1].c_str());
         ambientColor = atof(params[2].c_str());
         ambientColor = atof(params[3].c_str());
 
-        float diffuseColor[3];
         diffuseColor = atof(params[4].c_str());
         diffuseColor = atof(params[5].c_str());
         diffuseColor = atof(params[6].c_str());
 
-        float specularColor[3];
         specularColor = atof(params[7].c_str());
         specularColor = atof(params[8].c_str());
         specularColor = atof(params[9].c_str());
 
-        float specular = atof(params[10].c_str());
+        float specularPower = atof(params[10].c_str());
 
-        float reflectiveColor[3];
         reflectiveColor = atof(params[11].c_str());
         reflectiveColor = atof(params[12].c_str());
         reflectiveColor = atof(params[13].c_str());
-
-        // TODO: Initialize the BRDF
       }
       else if (params[0].compare("xft") == 0) {
         Vector t = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
         transform.mul(Matrix(t, translation=true));
       }
       else if (params[0].compare("xfr") == 0) {
-        // TODO: Convert exponential rotations to matrix rotation
-      }
+	  	// this is the rotation matrix
+	  	Vector r_hat = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+      	Matrix r_x = Matrix(0, r_hat.z*-1, r_hat.y, r_hat.z, 0, r_hat.x*-1, r_hat.y*-1, r_hat.x, 0);
+      	float theta = r_hat.norm();
+      	Matrix dyad = Matrix(r_hat.x*r_hat.x, r_hat.x*r_hat.y, r_hat.x*r_hat.z, r_hat.x*r_hat, r_hat.y*r_hat.y, r_hat.y*r_hat.z, r_hat.x*r_hat.z, r_hat.y*r_hat.z, r_hat.z*r_hat.z);
+      	Matrix rotation = dyad.add(r_x.scale(sin(theta))).add(r_x.mul(r_x).scale(-1*cos(theta)));
+    }
       else if (params[0].compare("xfs") == 0) {
         Vector s = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
         transform.mul(Matrix(s));

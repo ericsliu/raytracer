@@ -115,6 +115,36 @@ void Matrix::printMatrix() {
   printf("\n");
 }
 
+Matrix Matrix::add(Matrix b) {
+  Matrix sum = Matrix();
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      sum[x][y] = array[x][y] + b.array[x][y];
+    }
+  }
+  return sum;
+}
+
+Matrix Matrix::scale(float c) {
+  Matrix scaled = Matrix();
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      scaled[x][y] = array[x][y] * c;
+    }
+  }
+  return scaled;
+}
+
+Matrix Matrix::transpose() {
+  Matrix transpose = Matrix();
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      transpose[x][y] = array[y][x];
+    }
+  }
+  return transpose;
+}
+
 Matrix Matrix::mul(Matrix b) {
   Matrix product = Matrix();
   for (int y = 0; y < 4; y++) { // row of matrix A to use

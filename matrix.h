@@ -27,4 +27,7 @@ class Matrix {
     Point mul(Point); //apply transformations to a point
     Ray mul(Ray); //apply transformations to a ray
     Matrix inv();
+    Matrix transpose();
+    Matrix add();
+    Matrix scale();
 };

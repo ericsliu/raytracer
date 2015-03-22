@@ -132,49 +132,61 @@ Object::Object() {
 
 Object::Object(std::vector< Shape* > inShape) {
   shape = inShape;
+  transform = Matrix();
   ambient = Color(0.7, 0.7, 0.7);
   diffuse = Color(0.7, 0.7, 0.7);
   specular = Color(0.7, 0.7, 0.7);
+  specularPow = 2;
   reflective = Color(0.7, 0.7, 0.7);
 }
 
-Object::Object(std::vector< Shape* > inShape, Color amb, Color dif, Color spec, Color ref) {
+Object::Object(std::vector< Shape* > inShape, Color amb, Color dif, Color spec, float specPow, Color ref) {
   shape = inShape;
+  transform = Matrix();
   ambient = amb;
   diffuse = dif;
   specular = spec;
+  specularPow = specPow;
   reflective = ref;
 }
 
-Object::Object(std::vector< Shape* > inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
+Object::Object(std::vector< Shape* > inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float specPow, float rr, float rg, float rb) {
   shape = inShape;
+  transform = Matrix();
   ambient = Color(ar, ag, ab);
   diffuse = Color(dr, dg, db);
   specular = Color(sr, sg, sb);
+  specularPow = specPow;
   reflective = Color(rr, rg, rb);
 }
 
 Object::Object(Shape* inShape) {
   shape.push_back(inShape);
+  transform = Matrix();
   ambient = Color(0.7, 0.7, 0.7);
   diffuse = Color(0.7, 0.7, 0.7);
   specular = Color(0.7, 0.7, 0.7);
+  specularPow = 2;
   reflective = Color(0.7, 0.7, 0.7);
 }
 
-Object::Object(Shape* inShape, Color amb, Color dif, Color spec, Color ref) {
+Object::Object(Shape* inShape, Color amb, Color dif, Color spec, float specPow, Color ref) {
   shape.push_back(inShape);
+  transform = Matrix();
   ambient = amb;
   diffuse = dif;
   specular = spec;
+  specularPow = specPow;
   reflective = ref;
 }
 
-Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
+Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float specPow, float rr, float rg, float rb) {
   shape.push_back(inShape);
+  transform = Matrix();
   ambient = Color(ar, ag, ab);
   diffuse = Color(dr, dg, db);
   specular = Color(sr, sg, sb);
+  specularPow = specPow;
   reflective = Color(rr, rg, rb);
 }
 
@@ -190,12 +202,18 @@ float Object::intersect(Ray& ray) {
 float Object::intersect(Ray& ray, LocalGeo* local) {
   float t = -1;
   unsigned int index = 0;
+  Ray objFrameRay = transform.inv().mul(ray);
+  float scalar = transform.inv().mul(ray.dir).norm();
   for(int i = 0; i < shape.size(); i++) {
-    float temp = shape[i]->intersect(ray);
+    float temp = shape[i]->intersect(objFrameRay);
     if (temp != -1 and temp < t) {
       t = temp;
       index = i;
     }
   }
   return shape[index]->intersect(ray, local);
+}
+
+void Object::setTransform(Matrix& t) {
+  transform = t;
 }
