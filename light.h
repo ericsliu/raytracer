@@ -57,18 +57,30 @@ class DirecLight: public Light {
     void generateLightRay(LocalGeo*, Ray&, Color&);
 };
 
+class AmbieLight: public Light {
+  public:
+    AmbieLight();
+    AmbieLight(float,float,float,float,float,float);
+    void generateLightRay(LocalGeo*, Ray&, Color&);
+};
+
 /*
  * Class Object - contains a shape and BRDF
  */
 class Object {
   public:
-    Shape* shape;
+    std::vector< Shape* > shape;
     Color ambient;
     Color diffuse;
     Color specular;
     Color reflective;
     Object();
+    Object(std::vector< Shape* >);
+    Object(std::vector< Shape* >, Color, Color, Color, Color);
+    Object(std::vector< Shape* >, float, float, float, float, float, float, float, float, float, float, float, float);
     Object(Shape*);
     Object(Shape*, Color, Color, Color, Color);
     Object(Shape*, float, float, float, float, float, float, float, float, float, float, float, float);
+    float intersect(Ray&);
+    float intersect(Ray&, LocalGeo*);
 };

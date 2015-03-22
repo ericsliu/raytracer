@@ -110,10 +110,27 @@ void DirecLight::generateLightRay(LocalGeo* local, Ray& lray, Color& lcolor) {
   lcolor = color;
 }
 
+AmbieLight::AmbieLight() {
+  vector = Vector();
+  color = Color();
+  type = "ambient";
+}
+
+AmbieLight::AmbieLight(float red, float green, float blue) {
+  vector = Vector();
+  color = Color(red,green,blue);
+  type = "ambient";
+}
+
+void AmbieLight::generateLightRay(LocalGeo* local, Ray& lray, Color& lcolor) {
+  lray = Ray(local->getPosition(), Vector(), 0.0, 0.0);
+  lcolor = color;
+}
+
 Object::Object() {
 }
 
-Object::Object(Shape* inShape) {
+Object::Object(std::vector< Shape* > inShape) {
   shape = inShape;
   ambient = Color(0.7, 0.7, 0.7);
   diffuse = Color(0.7, 0.7, 0.7);
@@ -121,7 +138,7 @@ Object::Object(Shape* inShape) {
   reflective = Color(0.7, 0.7, 0.7);
 }
 
-Object::Object(Shape* inShape, Color amb, Color dif, Color spec, Color ref) {
+Object::Object(std::vector< Shape* > inShape, Color amb, Color dif, Color spec, Color ref) {
   shape = inShape;
   ambient = amb;
   diffuse = dif;
@@ -129,10 +146,56 @@ Object::Object(Shape* inShape, Color amb, Color dif, Color spec, Color ref) {
   reflective = ref;
 }
 
-Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
+Object::Object(std::vector< Shape* > inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
   shape = inShape;
   ambient = Color(ar, ag, ab);
   diffuse = Color(dr, dg, db);
   specular = Color(sr, sg, sb);
   reflective = Color(rr, rg, rb);
+}
+
+Object::Object(Shape* inShape) {
+  shape.push_back(inShape);
+  ambient = Color(0.7, 0.7, 0.7);
+  diffuse = Color(0.7, 0.7, 0.7);
+  specular = Color(0.7, 0.7, 0.7);
+  reflective = Color(0.7, 0.7, 0.7);
+}
+
+Object::Object(Shape* inShape, Color amb, Color dif, Color spec, Color ref) {
+  shape.push_back(inShape);
+  ambient = amb;
+  diffuse = dif;
+  specular = spec;
+  reflective = ref;
+}
+
+Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg, float db, float sr, float sg, float sb, float rr, float rg, float rb) {
+  shape.push_back(inShape);
+  ambient = Color(ar, ag, ab);
+  diffuse = Color(dr, dg, db);
+  specular = Color(sr, sg, sb);
+  reflective = Color(rr, rg, rb);
+}
+
+float Object::intersect(Ray& ray) {
+  float t = -1;
+  for(int i = 0; i < shape.size(); i++) {
+    float temp = shape[i]->intersect(ray);
+    if (temp != -1 and temp < t) t = temp; 
+  }
+  return t;
+}
+
+float Object::intersect(Ray& ray, LocalGeo* local) {
+  float t = -1;
+  unsigned int index = 0;
+  for(int i = 0; i < shape.size(); i++) {
+    float temp = shape[i]->intersect(ray);
+    if (temp != -1 and temp < t) {
+      t = temp;
+      index = i;
+    }
+  }
+  return shape[index]->intersect(ray, local);
 }

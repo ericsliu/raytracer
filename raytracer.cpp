@@ -90,7 +90,8 @@ void initScene() {
 // Load necessary objects
 //****************************************************
 void loadObjs(std::string filename) {
-  /*
+  std::vertex< Point > objPoints;
+  std::vertex< Shape* > triangles;
   std::ifstream infile(filename);
   std::string line;
 
@@ -128,15 +129,18 @@ void loadObjs(std::string filename) {
         }
         if (count > 3) std::cout<<"Parser doesn't support polygons with more than 3 vertices!"<<std::endl;
         Triangle* triangle = new Triangle(objPoints[indices[0]],objPoints[indices[1]],objPoints[indices[2]]);
-        // TODO: Add these triangles to some primitive...
+        triangles.push_back(triangle);
       }
       else std::cout<<"Unrecognized parameter: "<<params[0]<<std::endl;
     }
     infile.close();
+    if (triangles.size() > 0) {
+      objects.push_back(Object(triangles))
+      // TODO: Apply color to Obj files.
+    }
   } else {
     std::cout<<"Can't open file!"<<std::endl; 
   }
-  */
   // CODE TO ENSURE PARSING .obj WORKS
   /*
   for (int i = 0; i < objPoints.size(); i++) {
@@ -307,12 +311,11 @@ void loadScene() {
       
       // Parser the arguments
       if (params[0].compare("cam") == 0) {
-        Point e = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
-        Point ll = Point(atof(params[4].c_str()), atof(params[5].c_str()), atof(params[6].c_str()));
-        Point lr = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
-        Point ul = Point(atof(params[10].c_str()), atof(params[11].c_str()), atof(params[12].c_str()));
-        Point ur = Point(atof(params[13].c_str()), atof(params[14].c_str()), atof(params[15].c_str()));
-        // TODO: Initialize Camera or something
+        camera = Point(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        ll = Point(atof(params[4].c_str()), atof(params[5].c_str()), atof(params[6].c_str()));
+        lr = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
+        ul = Point(atof(params[10].c_str()), atof(params[11].c_str()), atof(params[12].c_str()));
+        ur = Point(atof(params[13].c_str()), atof(params[14].c_str()), atof(params[15].c_str()));
       }
       else if (params[0].compare("sph") == 0) {
         Sphere* sph;
@@ -331,7 +334,7 @@ void loadScene() {
       }
       else if (params[0].compare("obj") == 0) {
         loadObjs(params[1]);
-        // TODO: Figure out how to apply transform to model loaded from obj file
+        // TODO: Figure out how to apply transform/color to model loaded from obj file
       }
       else if (params[0].compare("ltp") == 0) {
         PointLight* pl;
@@ -341,8 +344,8 @@ void loadScene() {
         float r = atof(params[4].c_str());
         float g = atof(params[5].c_str());
         float b = atof(params[6].c_str());
-        pl = new PointLight(x, y, z, r, g, b); 
-        // TODO: add to a list of lights
+        pl = new PointLight(x, y, z, r, g, b);
+        lights.push_back(pl);
       }
       else if (params[0].compare("ltd") == 0) {
         PointLight* dl;
@@ -353,7 +356,7 @@ void loadScene() {
         float g = atof(params[5].c_str());
         float b = atof(params[6].c_str());
         dl = new DirecLight(x, y, z, r, g, b); 
-        // TODO: add to a list of lights
+        lights.push_back(dl);
       }
       else if (params[0].compare("lta") == 0) {
         PointLight* al;
@@ -361,7 +364,7 @@ void loadScene() {
         float g = atof(params[5].c_str());
         float b = atof(params[6].c_str());
         al = new AmbieLight(r, g, b); 
-        // TODO: add to a list of lights
+        lights.push_back(al);
       }
       else if (params[0].compare("mat") == 0) {
         float ambientColor[3];
@@ -466,10 +469,10 @@ void sample(float centerX, float centerY, float radius) {
   lights.clear();
   Vector cameraDir = Vector(0, 0, -1.0);
   Sphere testSphere = Sphere(Point(0.0, 0.0, -5.0), 2.0);
-  Object sphereObj = Object(&testSphere, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
+  Object sphereObj = Object(&testSphere, 1, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
   objects.push_back(sphereObj);
   Triangle testTriangle = Triangle(Point(-3, 0, -5), Point(0, 0, -5), Point(-2, 1, 0));
-  Object triangleObj = Object(&testTriangle, 0.1, 0.1, 0.1, 0.1, 0.8, 0.5, 0.6, 0.0, 0.3, 0, 0, 0);
+  Object triangleObj = Object(&testTriangle, 1, 0.1, 0.1, 0.1, 0.1, 0.8, 0.5, 0.6, 0.0, 0.3, 0, 0, 0);
   objects.push_back(triangleObj);
   DirecLight testDLight = DirecLight(0.25, 0.25, -0.25, 0, 1, 1);
   lights.push_back(&testDLight);
