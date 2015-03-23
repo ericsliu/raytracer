@@ -1,3 +1,5 @@
+#ifndef GEOMETRY_H
+#define GEOMETRY_H
 #include <string>
 
 class Point;
@@ -122,3 +124,5 @@ class Triangle : public Shape {
     //bool intersect(Ray&, float*);
     //bool intersect(Ray&, float*, LocalGeo*);
 };
+
+#endif

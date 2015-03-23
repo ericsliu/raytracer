@@ -1,8 +1,9 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef LIGHT_H
+#define LIGHT_H
 #include "geometry.h"
-#endif
 #include <string>
+#include <vector>
+#include "matrix.h"
 
 class Color;
 class Light;
@@ -86,3 +87,5 @@ class Object {
     float intersect(Ray&, LocalGeo*);
     void setTransform(Matrix&);
 };
+
+#endif

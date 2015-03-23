@@ -1,11 +1,7 @@
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef MATRIX_H
+#define MATRIX_H
 #include "light.h"
-#endif
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
 #include "geometry.h"
-#endif
 #include <string>
 
 class Matrix;
@@ -20,7 +16,7 @@ class Matrix {
     Matrix();
     Matrix(Point);
     Matrix(Vector);
-    Matrix(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float t0=0, float t1=0, float t2=0)
+    Matrix(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float t0=0, float t1=0, float t2=0);
     void printMatrix();
     Matrix mul(Matrix); //equivalent to AB, where A is this matrix
     Vector mul(Vector); //apply transformations to a vector
@@ -31,3 +27,5 @@ class Matrix {
     Matrix add();
     Matrix scale();
 };
+
+#endif

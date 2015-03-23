@@ -3,6 +3,8 @@
 #include "light.h"
 #endif
 #include <math.h>
+#include <vector>
+#include "matrix.h"
 
 /*
  * Class Color
@@ -192,16 +194,23 @@ Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg,
 
 float Object::intersect(Ray& ray) {
   float t = -1;
+  Ray objFrameRay = transform.inv().mul(ray);
+  float scalar = transform.inv().mul(ray.dir).norm();
   for(int i = 0; i < shape.size(); i++) {
-    float temp = shape[i]->intersect(ray);
+    float temp = shape[i]->intersect(objFrameRay);
     if (temp != -1 and temp < t) t = temp; 
   }
-  return t;
+  if (t != -1) {
+    t *= scalar;
+    return t;
+  } else {
+    return -1
+  }
 }
 
 float Object::intersect(Ray& ray, LocalGeo* local) {
   float t = -1;
-  unsigned int index = 0;
+  unsigned int index = -1;
   Ray objFrameRay = transform.inv().mul(ray);
   float scalar = transform.inv().mul(ray.dir).norm();
   for(int i = 0; i < shape.size(); i++) {
@@ -211,7 +220,15 @@ float Object::intersect(Ray& ray, LocalGeo* local) {
       index = i;
     }
   }
-  return shape[index]->intersect(ray, local);
+  if (index != -1) {
+    t = shape[index]->intersect(ray, local);
+    t *= scalar;
+    local.setPosition(transform.mul(local.getPosition()));
+    local.setNormal(transform.inv().transpose().mul(local.getNormal()));
+    return t;
+  } else {
+    return -1
+  }
 }
 
 void Object::setTransform(Matrix& t) {
