@@ -26,22 +26,14 @@
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
-#ifndef LIGHT_H
-#define LIGHT_H
+
 #include "light.h"
-#endif
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
 #include "geometry.h"
-#endif
-#ifndef MATRIX_H
-#define MATRIX_H
 #include "matrix.h"
-#endif
 
 #define PI 3.14159265  // Should be used from mathlib
-#define WINDOW_WIDTH 800.0
-#define WINDOW_HEIGHT 800.0
+#define WINDOW_WIDTH 100.0
+#define WINDOW_HEIGHT 100.0
 inline float sqr(float x) { return x*x; }
 
 using namespace std;
@@ -67,13 +59,12 @@ Point ul = Point(-0.5, 0.5, -0.5);
 Point ll = Point(-0.5, -0.5, -0.5);
 Point ur = Point(0.5, 0.5, -0.5);
 Point lr = Point(0.5, -0.5, -0.5);
-Color ambientColor = Color(0.7, 0.7, 0.7);
+Color ambientColor = Color(0.3, 0.3, 0.3);
 Color diffuseColor = Color(0.7, 0.7, 0.7);
 Color specularColor = Color(0.7, 0.7, 0.7);
-float specularPower = 2;
+float specularPower = 64;
 Color reflectiveColor = Color(0.7, 0.7, 0.7);
 Vector point;
-float power = 64;
 std::vector<Light*> lights;
 std::vector<Object> objects;
 //std::vector<
@@ -91,9 +82,9 @@ void initScene() {
 // Load necessary objects
 //****************************************************
 void loadObjs(std::string filename, Matrix& transform) {
-  std::vertex< Point > objPoints;
-  std::vertex< Shape* > triangles;
-  std::ifstream infile(filename);
+  std::vector< Point > objPoints;
+  std::vector< Shape* > triangles;
+  std::ifstream infile(filename.c_str());
   std::string line;
 
   if (infile.is_open()) {
@@ -317,6 +308,11 @@ void loadScene() {
         lr = Point(atof(params[7].c_str()), atof(params[8].c_str()), atof(params[9].c_str()));
         ul = Point(atof(params[10].c_str()), atof(params[11].c_str()), atof(params[12].c_str()));
         ur = Point(atof(params[13].c_str()), atof(params[14].c_str()), atof(params[15].c_str()));
+        std::cout << "Eye: " << camera.x << " " << camera.y << " " << camera.z << std::endl;
+        std::cout << "LL: " << ll.x << " " << ll.y << " " << ll.z << std::endl;
+        std::cout << "LR: " << lr.x << " " << lr.y << " " << lr.z << std::endl;
+        std::cout << "UL: " << ul.x << " " << ul.y << " " << ul.z << std::endl;
+        std::cout << "UR: " << ur.x << " " << ur.y << " " << ur.z << std::endl;
       }
       else if (params[0].compare("sph") == 0) {
         Sphere* sph;
@@ -325,7 +321,13 @@ void loadScene() {
         sph = new Sphere(center,radius);
         Object obj = Object(sph, ambientColor, diffuseColor, specularColor, specularPower, reflectiveColor);
         obj.setTransform(transform);
+        std::cout << "Sphere Transform:" << std::endl;
+        std::cout << obj.transform.array[0][0] << " " << obj.transform.array[0][1] << " " << obj.transform.array[0][2] << " " << obj.transform.array[0][3] << std::endl;
+        std::cout << obj.transform.array[1][0] << " " << obj.transform.array[1][1] << " " << obj.transform.array[1][2] << " " << obj.transform.array[1][3] << std::endl;
+        std::cout << obj.transform.array[2][0] << " " << obj.transform.array[2][1] << " " << obj.transform.array[2][2] << " " << obj.transform.array[2][3] << std::endl;
         objects.push_back(obj);
+        std::cout << "Sphere center: " << center.x << " " << center.y << " " << center.z << std::endl;
+        std::cout << "Sphere radius: " << radius << std::endl;
       }
       else if (params[0].compare("tri") == 0) {
         Triangle* tri;
@@ -335,6 +337,10 @@ void loadScene() {
         tri = new Triangle(point1,point2,point3);
         Object obj = Object(tri, ambientColor, diffuseColor, specularColor, specularPower, reflectiveColor);
         obj.setTransform(transform);
+        std::cout << "Triangle Transform:" << std::endl;
+        std::cout << obj.transform.array[0][0] << " " << obj.transform.array[0][1] << " " << obj.transform.array[0][2] << " " << obj.transform.array[0][3] << std::endl;
+        std::cout << obj.transform.array[1][0] << " " << obj.transform.array[1][1] << " " << obj.transform.array[1][2] << " " << obj.transform.array[1][3] << std::endl;
+        std::cout << obj.transform.array[2][0] << " " << obj.transform.array[2][1] << " " << obj.transform.array[2][2] << " " << obj.transform.array[2][3] << std::endl;
         objects.push_back(obj);
       }
       else if (params[0].compare("obj") == 0) {
@@ -352,7 +358,7 @@ void loadScene() {
         lights.push_back(pl);
       }
       else if (params[0].compare("ltd") == 0) {
-        PointLight* dl;
+        DirecLight* dl;
         float x = atof(params[1].c_str());
         float y = atof(params[2].c_str());
         float z = atof(params[3].c_str());
@@ -363,51 +369,88 @@ void loadScene() {
         lights.push_back(dl);
       }
       else if (params[0].compare("lta") == 0) {
-        PointLight* al;
-        float r = atof(params[4].c_str());
-        float g = atof(params[5].c_str());
-        float b = atof(params[6].c_str());
+        AmbieLight* al;
+        float r = atof(params[1].c_str());
+        float g = atof(params[2].c_str());
+        float b = atof(params[3].c_str());
         al = new AmbieLight(r, g, b); 
         lights.push_back(al);
       }
       else if (params[0].compare("mat") == 0) {
         // These are globally accessible
-        ambientColor = atof(params[1].c_str());
-        ambientColor = atof(params[2].c_str());
-        ambientColor = atof(params[3].c_str());
+        ambientColor.r = atof(params[1].c_str());
+        ambientColor.g = atof(params[2].c_str());
+        ambientColor.b = atof(params[3].c_str());
 
-        diffuseColor = atof(params[4].c_str());
-        diffuseColor = atof(params[5].c_str());
-        diffuseColor = atof(params[6].c_str());
+        diffuseColor.r = atof(params[4].c_str());
+        diffuseColor.g = atof(params[5].c_str());
+        diffuseColor.b = atof(params[6].c_str());
 
-        specularColor = atof(params[7].c_str());
-        specularColor = atof(params[8].c_str());
-        specularColor = atof(params[9].c_str());
+        specularColor.r = atof(params[7].c_str());
+        specularColor.g = atof(params[8].c_str());
+        specularColor.b = atof(params[9].c_str());
 
         float specularPower = atof(params[10].c_str());
 
-        reflectiveColor = atof(params[11].c_str());
-        reflectiveColor = atof(params[12].c_str());
-        reflectiveColor = atof(params[13].c_str());
+        reflectiveColor.r = atof(params[11].c_str());
+        reflectiveColor.g = atof(params[12].c_str());
+        reflectiveColor.b = atof(params[13].c_str());
       }
       else if (params[0].compare("xft") == 0) {
         Vector t = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
-        transform.mul(Matrix(t, translation=true));
+        Matrix translation = Matrix(t, true);
+        transform = transform.mul(translation);
+        std::cout << "Translation:" << std::endl;
+        std::cout << translation.array[0][0] << " " << translation.array[0][1] << " " << translation.array[0][2] << " " << translation.array[0][3] << std::endl;
+        std::cout << translation.array[1][0] << " " << translation.array[1][1] << " " << translation.array[1][2] << " " << translation.array[1][3] << std::endl;
+        std::cout << translation.array[2][0] << " " << translation.array[2][1] << " " << translation.array[2][2] << " " << translation.array[2][3] << std::endl;
+        std::cout << "New Transform:" << std::endl;
+        std::cout << transform.array[0][0] << " " << transform.array[0][1] << " " << transform.array[0][2] << " " << transform.array[0][3] << std::endl;
+        std::cout << transform.array[1][0] << " " << transform.array[1][1] << " " << transform.array[1][2] << " " << transform.array[1][3] << std::endl;
+        std::cout << transform.array[2][0] << " " << transform.array[2][1] << " " << transform.array[2][2] << " " << transform.array[2][3] << std::endl;
       }
       else if (params[0].compare("xfr") == 0) {
-	  	// this is the rotation matrix
-	  	Vector r_hat = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
-      	Matrix r_x = Matrix(0, r_hat.z*-1, r_hat.y, r_hat.z, 0, r_hat.x*-1, r_hat.y*-1, r_hat.x, 0);
-      	float theta = r_hat.norm();
-      	Matrix dyad = Matrix(r_hat.x*r_hat.x, r_hat.x*r_hat.y, r_hat.x*r_hat.z, r_hat.x*r_hat, r_hat.y*r_hat.y, r_hat.y*r_hat.z, r_hat.x*r_hat.z, r_hat.y*r_hat.z, r_hat.z*r_hat.z);
-      	Matrix rotation = dyad.add(r_x.scale(sin(theta))).add(r_x.mul(r_x).scale(-1*cos(theta)));
+        // this is the rotation matrix
+        Vector r_hat = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
+        float theta = r_hat.norm(); // /180.0*PI
+        r_hat.normalize();
+        std::cout << "Axis of Rotation:" << std::endl;
+        std::cout << r_hat.x << " " << r_hat.y << " " << r_hat.z << std::endl;
+        std::cout << "Rotation Amount (Radians):" << std::endl;
+        std::cout << theta << std::endl;
+        Matrix r_x = Matrix(0, r_hat.z*-1, r_hat.y, r_hat.z, 0, r_hat.x*-1, r_hat.y*-1, r_hat.x, 0);
+        Matrix dyad = Matrix(r_hat.x*r_hat.x, r_hat.x*r_hat.y, r_hat.x*r_hat.z, r_hat.x*r_hat.y, r_hat.y*r_hat.y, r_hat.y*r_hat.z, r_hat.x*r_hat.z, r_hat.y*r_hat.z, r_hat.z*r_hat.z);
+        Matrix rotation = dyad.add(r_x.scale(sin(theta))).add(r_x.mul(r_x).scale(-1*cos(theta)));
+        // Matrix rotation = Matrix().add(r_x.scale(sin(theta))).add(r_x.mul(r_x).scale(1+(-1*cos(theta))));
+        transform = transform.mul(rotation);
+        std::cout << "Rotation:" << std::endl;
+        std::cout << rotation.array[0][0] << " " << rotation.array[0][1] << " " << rotation.array[0][2] << " " << rotation.array[0][3] << std::endl;
+        std::cout << rotation.array[1][0] << " " << rotation.array[1][1] << " " << rotation.array[1][2] << " " << rotation.array[1][3] << std::endl;
+        std::cout << rotation.array[2][0] << " " << rotation.array[2][1] << " " << rotation.array[2][2] << " " << rotation.array[2][3] << std::endl;
+        std::cout << "New Transform:" << std::endl;
+        std::cout << transform.array[0][0] << " " << transform.array[0][1] << " " << transform.array[0][2] << " " << transform.array[0][3] << std::endl;
+        std::cout << transform.array[1][0] << " " << transform.array[1][1] << " " << transform.array[1][2] << " " << transform.array[1][3] << std::endl;
+        std::cout << transform.array[2][0] << " " << transform.array[2][1] << " " << transform.array[2][2] << " " << transform.array[2][3] << std::endl;
     }
       else if (params[0].compare("xfs") == 0) {
         Vector s = Vector(atof(params[1].c_str()), atof(params[2].c_str()), atof(params[3].c_str()));
-        transform.mul(Matrix(s));
+        Matrix scaling = Matrix(s);
+        transform = transform.mul(scaling);
+        std::cout << "Scaling:" << std::endl;
+        std::cout << scaling.array[0][0] << " " << scaling.array[0][1] << " " << scaling.array[0][2] << " " << scaling.array[0][3] << std::endl;
+        std::cout << scaling.array[1][0] << " " << scaling.array[1][1] << " " << scaling.array[1][2] << " " << scaling.array[1][3] << std::endl;
+        std::cout << scaling.array[2][0] << " " << scaling.array[2][1] << " " << scaling.array[2][2] << " " << scaling.array[2][3] << std::endl;
+        std::cout << "New Transform:" << std::endl;
+        std::cout << transform.array[0][0] << " " << transform.array[0][1] << " " << transform.array[0][2] << " " << transform.array[0][3] << std::endl;
+        std::cout << transform.array[1][0] << " " << transform.array[1][1] << " " << transform.array[1][2] << " " << transform.array[1][3] << std::endl;
+        std::cout << transform.array[2][0] << " " << transform.array[2][1] << " " << transform.array[2][2] << " " << transform.array[2][3] << std::endl;
       }
       else if (params[0].compare("xfz") == 0) {
         transform = Matrix();
+        std::cout << "New Transform:" << std::endl;
+        std::cout << transform.array[0][0] << " " << transform.array[0][1] << " " << transform.array[0][2] << " " << transform.array[0][3] << std::endl;
+        std::cout << transform.array[1][0] << " " << transform.array[1][1] << " " << transform.array[1][2] << " " << transform.array[1][3] << std::endl;
+        std::cout << transform.array[2][0] << " " << transform.array[2][1] << " " << transform.array[2][2] << " " << transform.array[2][3] << std::endl;
       }
       else std::cout<<"Unrecognized parameter: "<<params[0]<<std::endl;
     }
@@ -451,103 +494,105 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
 //****************************************************
 
 
-void sample(float centerX, float centerY, float radius) {
+void sample(float centerX, float centerY) {
   glBegin(GL_POINTS);
 
   int i,j;  // Pixel indices
 
-  int minI = max(0,(int)floor(centerX-radius));
-  int maxI = min(viewport.w-1,(int)ceil(centerX+radius));
-
-  int minJ = max(0,(int)floor(centerY-radius));
-  int maxJ = min(viewport.h-1,(int)ceil(centerY+radius));
-
   float yStep = (ul.y - ll.y) / viewport.h;
   float xStep = (lr.x - ll.x) / viewport.w;
-  //float xStep = 1.0 / viewport.w;
 
-  printf("w = %d, h = %d", viewport.w, viewport.h);
+  printf("w = %d, h = %d\n", viewport.w, viewport.h);
   printf("xStep = %f, yStep = %f\n", xStep, yStep);
-  
-  objects.clear();
-  lights.clear();
-  Vector cameraDir = Vector(0, 0, -1.0);
-  Sphere testSphere = Sphere(Point(0.0, 0.0, -5.0), 2.0);
-  Object sphereObj = Object(&testSphere, 1, 0.1, 0.1, 0.1, 0.5, 0.1, 0.5, 0.0, 1.0, 0.0, 0, 0, 0);
-  objects.push_back(sphereObj);
-  Triangle testTriangle = Triangle(Point(-3, 0, -5), Point(0, 0, -5), Point(-2, 1, 0));
-  Object triangleObj = Object(&testTriangle, 1, 0.1, 0.1, 0.1, 0.1, 0.8, 0.5, 0.6, 0.0, 0.3, 0, 0, 0);
-  objects.push_back(triangleObj);
-  DirecLight testDLight = DirecLight(0.25, 0.25, -0.25, 0, 1, 1);
-  lights.push_back(&testDLight);
-  PointLight testPLight = PointLight(7, 0, -5.0, 1, 1, 0);
-  lights.push_back(&testPLight);
 
   printf("objects is %d\n", objects.size());
-  LocalGeo geo = LocalGeo();
-  LocalGeo* geoPointer = &geo;
   for (i = 0; i < viewport.w; i++) {
     for (j = 0; j < viewport.h; j++) {
       // send out a ray
-      Point viewPlanePoint = Point((i - centerX) * xStep, (j - centerY) * yStep, -1);
-      Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera), 8.0);
+      Point viewPlanePoint = Point((i - centerX + 0.5) * xStep, (j - centerY + 0.5) * yStep, 0);
+      Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera));
+      
       Color pixColor = Color();
       float bestHit = std::numeric_limits<float>::infinity();
-      int nearestObj = 0;
-      bool hit = false;
+      int nearestObjIndex = -1;
       // loop to find nearest object
       for (int o = 0; o < objects.size(); o++) {
-        Color lightColor = Color();
-        float hitPoint = objects[o].shape->intersect(sampleRay, geoPointer);
-        float hitLight;
+        float hitPoint = objects[o].intersect(sampleRay);
         if (hitPoint != -1.0 && hitPoint < bestHit) {
           bestHit = hitPoint;
-          nearestObj = o;
-          hit = true;
+          nearestObjIndex = o;
         }
       }
-      if (hit) {
+      if (nearestObjIndex != -1) {
+        // Calculate collision point and normal on the nearest object
+        LocalGeo geo = LocalGeo();
+        objects[nearestObjIndex].intersect(sampleRay, &geo);
+
+        Ray shadowRay = Ray();
         Color lightColor = Color();
-        float hitPoint = objects[nearestObj].shape->intersect(sampleRay, geoPointer);
-        float hitLight;
-        Ray lightRay;
-        for (int l = 0; l < lights.size(); l++) {
-          bool blocked = false;
-          lights[l]->generateLightRay(geoPointer, lightRay, lightColor);
-          // check to see if light hits object
-          for (int lo = 0; lo < objects.size(); lo++) {
-            hitLight = objects[nearestObj].shape->intersect(lightRay);
-            if (hitLight != -1.0) {
-              blocked = true;
-              break;
+        // Iterate over lights and compute color
+        for (unsigned int l=0; l < lights.size(); l++) {
+          lights[l]->generateLightRay(&geo, shadowRay, lightColor); // Shadow Ray (Ray from object towards light source)
+
+          Color tempColor;
+          // Compute ambient color
+          tempColor = objects[nearestObjIndex].ambient;
+          tempColor.mul(lightColor);
+          pixColor.add(tempColor);
+
+          if (lights[l]->type.compare("ambient") == 0) continue;
+          else {
+            // Check if shadowRay isn't obstructed
+            // std::cout << "Shadow Ray" << std::endl;
+            // std::cout << shadowRay.dir.x << " " << shadowRay.dir.y << " " << shadowRay.dir.z << std::endl;
+            bool blocked = false;
+            for (int o = 0; o < objects.size(); o++) {
+              if (objects[o].intersect(shadowRay) != -1.0) {
+                blocked = true;
+                break;
+              }
+            }
+            if (!blocked) {
+              Vector lightDirection = shadowRay.dir;
+
+              // Compute diffuse color
+              double c2 = std::max(0.0f, (lightDirection).dot(geo.normal));
+              tempColor = objects[nearestObjIndex].diffuse;
+              tempColor.mul(lightColor);
+              tempColor.scale(c2);
+              pixColor.add(tempColor);
+
+              // Compute specular color
+              Vector projection = geo.normal;
+              projection.scale(lightDirection.dot(geo.normal)*2.0);
+              Vector reflection = lightDirection;
+              reflection.scale(-1);
+              reflection.add(projection);
+              double c3 = pow(std::max(0.0f, -reflection.dot(sampleRay.dir)), objects[nearestObjIndex].specularPow);
+              tempColor = objects[nearestObjIndex].specular;
+              tempColor.mul(lightColor);
+              tempColor.scale(c3);
+              pixColor.add(tempColor);
+
+              // Linear falloff (UNUSED)
+              // if (lights[l]->type.compare("point") == 0){
+              //   color = color.scale(1/shadowRay.tMax)
+              // }
             }
           }
-          if (!blocked) {
-            Vector lightNeg = lightRay.dir;
-            lightNeg.normalize();
-            //diffuse
-            Color difColor = objects[nearestObj].diffuse;
-            difColor.mul(lightColor);
-            difColor.scale(std::max(lightNeg.dot(geoPointer->normal), 0.0f));
-            pixColor.add(difColor);
-            //specular
-            Color speColor = objects[nearestObj].specular;
-            speColor.mul(lightColor);
-            Vector r = geoPointer->normal;
-            Vector v = sampleRay.dir;
-            v.scale(-1);
-            r.scale(lightNeg.dot(geoPointer->normal) * 2);
-            r.sub(lightNeg);
-            r.normalize();
-            speColor.scale(pow(std::max(r.dot(v), 0.0f), power));
-            pixColor.add(speColor);
-            // TODO: REFLECTIONS
-          }
         }
+        // TODO: Reflections...
+      } else {
+        pixColor = Color(0,0,0);
       }
+      pixColor.r = std::min(1.0f, std::max(0.0f, pixColor.r));
+      pixColor.g = std::min(1.0f, std::max(0.0f, pixColor.g));
+      pixColor.b = std::min(1.0f, std::max(0.0f, pixColor.b));
       setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
     }
   }
+
+  std::cout <<"DONE" <<std::endl;
 
 /*
   Ray testRay = Ray(Point(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 1.0, 8.0);
@@ -568,7 +613,7 @@ void myDisplay() {
   glLoadIdentity();				        // make sure transformation is "zero'd"
 
   // Start drawing
-  sample(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) * 0.45);
+  sample(viewport.w / 2.0 , viewport.h / 2.0);
 
   glFlush();
   glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -613,7 +658,8 @@ int main(int argc, char *argv[]) {
   glutInitWindowPosition(0,0);
   glutCreateWindow(argv[0]);
 
-  initScene();							// quick function to set up scene
+  // initScene();							// quick function to set up scene
+  loadScene();
 
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);				// function to run when the window gets resized

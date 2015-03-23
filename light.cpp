@@ -1,26 +1,25 @@
-#ifndef LIGHT_H
-#define LIGHT_H
 #include "light.h"
-#endif
 #include <math.h>
 #include <vector>
 #include "matrix.h"
+#include <iostream>
 
 /*
  * Class Color
  */
+
 Color::Color() {
   r = 0; g = 0; b = 0;
 }
 
 Color::Color(float red, float green, float blue) {
-  if (r>1){r=1;} if (g>1){g=1;} if (b>1){b=1;}
+  // if (r>1){r=1;} if (g>1){g=1;} if (b>1){b=1;}
   r = red; g = green; b = blue;
 }
 
 Color::Color(Vector vector) {
   Vector temp = vector;
-  temp.normalize();
+  // temp.normalize();
   r = temp.x;
   g = temp.y;
   b = temp.z;
@@ -193,23 +192,29 @@ Object::Object(Shape* inShape, float ar, float ag, float ab, float dr, float dg,
 }
 
 float Object::intersect(Ray& ray) {
-  float t = -1;
+  float t = std::numeric_limits<float>::infinity();
+  // std::cout << "OLD RAY:" << std::endl;
+  // std::cout << ray.origin.x << " " << ray.origin.y << " " << ray.origin.z << std::endl;
+  // std::cout << ray.dir.x << " " << ray.dir.y << " " << ray.dir.z << std::endl;
   Ray objFrameRay = transform.inv().mul(ray);
+  // std::cout << "NEW RAY:" << std::endl;
+  // std::cout << objFrameRay.origin.x << " " << objFrameRay.origin.y << " " << objFrameRay.origin.z << std::endl;
+  // std::cout << objFrameRay.dir.x << " " << objFrameRay.dir.y << " " << objFrameRay.dir.z << std::endl;
   float scalar = transform.inv().mul(ray.dir).norm();
   for(int i = 0; i < shape.size(); i++) {
     float temp = shape[i]->intersect(objFrameRay);
     if (temp != -1 and temp < t) t = temp; 
   }
-  if (t != -1) {
+  if (t != std::numeric_limits<float>::infinity()) {
     t *= scalar;
     return t;
   } else {
-    return -1
+    return -1;
   }
 }
 
 float Object::intersect(Ray& ray, LocalGeo* local) {
-  float t = -1;
+  float t = std::numeric_limits<float>::infinity();
   unsigned int index = -1;
   Ray objFrameRay = transform.inv().mul(ray);
   float scalar = transform.inv().mul(ray.dir).norm();
@@ -221,13 +226,17 @@ float Object::intersect(Ray& ray, LocalGeo* local) {
     }
   }
   if (index != -1) {
-    t = shape[index]->intersect(ray, local);
+    t = shape[index]->intersect(objFrameRay, local);
     t *= scalar;
-    local.setPosition(transform.mul(local.getPosition()));
-    local.setNormal(transform.inv().transpose().mul(local.getNormal()));
+    local->setPosition(transform.mul(local->getPosition()));
+    // std::cout << "OLD NORMAL:" << std::endl;
+    // std::cout << local->getNormal().x << " " << local->getNormal().y << " " << local->getNormal().z << std::endl;
+    local->setNormal(transform.inv().transpose().mul(local->getNormal()));
+    // std::cout << "NEW NORMAL:" << std::endl;
+    // std::cout << local->getNormal().x << " " << local->getNormal().y << " " << local->getNormal().z << std::endl;
     return t;
   } else {
-    return -1
+    return -1;
   }
 }
 

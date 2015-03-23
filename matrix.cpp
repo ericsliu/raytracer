@@ -1,7 +1,4 @@
-#ifndef MATRIX_H
-#define MATRIX_H
 #include "matrix.h"
-#endif
 #include <math.h>
 #include <stdio.h>
 
@@ -21,7 +18,7 @@ Matrix::Matrix() {
   }
 }
 
-Matrix::Matrix(Point point, bool translation=false) {
+Matrix::Matrix(Point point, bool translation) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       if (x == y) {
@@ -53,7 +50,7 @@ Matrix::Matrix(Point point, bool translation=false) {
   }
 }
 
-Matrix::Matrix(Vector vector, bool translation=false) {
+Matrix::Matrix(Vector vector, bool translation) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       if (x == y) {
@@ -85,7 +82,7 @@ Matrix::Matrix(Vector vector, bool translation=false) {
   }
 }
 
-Matrix::Matrix(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float t0=0, float t1=0, float t2=0) {
+Matrix::Matrix(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float t0, float t1, float t2) {
   array[0][0] = m00;
   array[0][1] = m01;
   array[0][2] = m02;
@@ -119,7 +116,7 @@ Matrix Matrix::add(Matrix b) {
   Matrix sum = Matrix();
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      sum[x][y] = array[x][y] + b.array[x][y];
+      sum.array[x][y] = array[x][y] + b.array[x][y];
     }
   }
   return sum;
@@ -129,7 +126,7 @@ Matrix Matrix::scale(float c) {
   Matrix scaled = Matrix();
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      scaled[x][y] = array[x][y] * c;
+      scaled.array[x][y] = array[x][y] * c;
     }
   }
   return scaled;
@@ -139,7 +136,7 @@ Matrix Matrix::transpose() {
   Matrix transpose = Matrix();
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      transpose[x][y] = array[y][x];
+      transpose.array[x][y] = array[y][x];
     }
   }
   return transpose;
@@ -162,7 +159,7 @@ Matrix Matrix::mul(Matrix b) {
 Vector Matrix::mul(Vector b) {
   float temp[3];
   for (int y = 0; y < 3; y++) { // row of matrix A to use
-    temp[y] = array[y][0]*b.xVal + array[y][1]*b.yVal + array[y][2]*b.zVal;
+    temp[y] = array[y][0]*b.x + array[y][1]*b.y + array[y][2]*b.z;
   }
   return Vector(temp[0],temp[1],temp[2]);
 }
@@ -170,7 +167,7 @@ Vector Matrix::mul(Vector b) {
 Point Matrix::mul(Point b) {
   float temp[3];
   for (int y = 0; y < 3; y++) { // row of matrix A to use
-    temp[y] = array[y][0]*b.xVal + array[y][1]*b.yVal + array[y][2]*b.zVal + array[y][3];
+    temp[y] = array[y][0]*b.x + array[y][1]*b.y + array[y][2]*b.z + array[y][3];
   }
   return Point(temp[0],temp[1],temp[2]);
 }

@@ -5,6 +5,7 @@
 #include <vector>
 #include "matrix.h"
 
+
 class Color;
 class Light;
 class PointLight;
@@ -61,7 +62,7 @@ class DirecLight: public Light {
 class AmbieLight: public Light {
   public:
     AmbieLight();
-    AmbieLight(float,float,float,float,float,float);
+    AmbieLight(float,float,float);
     void generateLightRay(LocalGeo*, Ray&, Color&);
 };
 
@@ -76,6 +77,7 @@ class Object {
     Color diffuse;
     Color specular;
     Color reflective;
+    float specularPow;
     Object();
     Object(std::vector< Shape* >);
     Object(std::vector< Shape* >, Color, Color, Color, float, Color);

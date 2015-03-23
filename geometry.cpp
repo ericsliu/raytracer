@@ -1,10 +1,8 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
 #include "geometry.h"
-#endif
 #include <limits>
 #include <math.h>
 #include <stdio.h>
+#include <iostream>
 
 #define EPSILON 1e-4
 
@@ -43,10 +41,10 @@ Vector Point::sub(Point p) {
  * Class Vector
  */
 Vector::Vector() {
-  x = 1;
-  y = 1;
-  z = 1;
-  this->normalize();
+  x = 0;
+  y = 0;
+  z = 0;
+  // this->normalize();
 }
 
 Vector::Vector(float xVal, float yVal, float zVal) {
@@ -196,44 +194,46 @@ Sphere::Sphere(Point c, float r) {
 }
 
 float Sphere::intersect(Ray& ray) {
-  Vector temp = Vector(ray.origin);
-  temp.sub(center);
   float a = ray.dir.dot(ray.dir);
+  Vector temp = ray.origin;
+  temp.sub(center);
   float b = ray.dir.dot(temp) * 2;
   float c = temp.dot(temp) - pow(radius,2);
-  float discriminant = pow(b, 2) - 4 * c;
-  //printf("discrim = %f\n", discriminant);
+  float discriminant = pow(b,2) - 4*a*c;
 
-  if (discriminant > 0) {
-    //printf("discrim > 0\n");
-    float t1 = (-b - sqrt(discriminant)) / 2;
-    float t2 = (-b + sqrt(discriminant)) / 2;
-    //printf("t1 = %f\n", t1);
-    //printf("t2 = %f\n", t2);
-    if (t1 >= ray.tMin) {
-      //printf("returning t1 = %f, ray.tMin = %f\n", t1, ray.tMin);
-      return t1;
-    } else if (t2 >= ray.tMin) {
-      //printf("ray starts at (%f,%f,%f) and has dir (%f,%f,%f)\n", ray.origin.x, ray.origin.y, ray.origin.z, ray.dir.x, ray.dir.y, ray.dir.z);
-      return t2;
-    } else return -1.0;
+  if (discriminant < 0) return -1;
+  else if (discriminant == 1) {
+    float t = -b/(2*a);
+    if (t >= ray.tMin && t <= ray.tMax) return t;
+    else return -1.0;
+  } else {
+    float t1 = (-b + sqrt(discriminant)) / (2*a);
+    float t2 = (-b - sqrt(discriminant)) / (2*a);
+    // Rest of the code assumes that t1 <= t2
+    if (t2 < t1) {
+      double temp = t1;
+      t1 = t2;
+      t2 = temp;
+    }
+    if (t1 <= ray.tMax && t1 >= ray.tMin) return t1;
+    else if (t2 >= ray.tMin && t2 <= ray.tMax) return t2;
+    else return -1.0;
   }
-  else if (discriminant == 0) {
-    printf("hello");
-    if (a >= ray.tMin) {
-      return a;
-    } else return -1.0;
-  } else return -1.0;
 }
 
 float Sphere::intersect(Ray& ray, LocalGeo* local) {
   float intersection = intersect(ray);
   if (intersection != -1.0) {
+    // std::cout << "RAY:" << std::endl;
+    // std::cout << ray.origin.x << " " << ray.origin.y << " " << ray.origin.z << std::endl;
+    // std::cout << ray.dir.x << " " << ray.dir.y << " " << ray.dir.z << std::endl;
     Point point = ray.at(intersection);
     Vector normal = Vector(point);
     local->setPosition(point);
     normal.sub(center);
     normal.normalize();
+    // std::cout << "SHAPE NORMAL:" << std::endl;
+    // std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
     local->setNormal(normal);
   }
   return intersection;
