@@ -26,6 +26,9 @@
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <FreeImage.h>
 
 #include "light.h"
 #include "geometry.h"
@@ -64,6 +67,7 @@ Color diffuseColor = Color(0.7, 0.7, 0.7);
 Color specularColor = Color(0.7, 0.7, 0.7);
 float specularPower = 64;
 int REF_BOUNCES = 5;
+int NUM_RAYS = 40;
 Color reflectiveColor = Color(0.7, 0.7, 0.7);
 Vector point;
 std::vector<Light*> lights;
@@ -503,13 +507,18 @@ void sample(float centerX, float centerY) {
   float yStep = (ul.y - ll.y) / viewport.h;
   float xStep = (lr.x - ll.x) / viewport.w;
 
+  std::vector<unsigned char> buf;
+
+  //#pragma omp parallel for
   for (i = 0; i < viewport.w; i++) {
     for (j = 0; j < viewport.h; j++) {
+      Color pixColor = Color();
+
+      for (int rayNum = 0; rayNum < NUM_RAYS; rayNum++) {
       // send out a ray
-      Point viewPlanePoint = Point((i - centerX + 0.5) * xStep, (j - centerY + 0.5) * yStep, 0);
+      Point viewPlanePoint = Point((i - centerX + (float) rand() / RAND_MAX) * xStep, (j - centerY + (float) rand() / RAND_MAX) * yStep, 0);
       Ray sampleRay = Ray(camera, viewPlanePoint.sub(camera));
       
-      Color pixColor = Color();
       float bestHit = std::numeric_limits<float>::infinity();
       int nearestObjIndex = -1;
       // loop to find nearest object
@@ -654,15 +663,30 @@ void sample(float centerX, float centerY) {
 
           }
         }
-      } else {
-        pixColor = Color(0,0,0);
       }
+      }
+      if(i == 100 && j == 400) {
+        printf("halfway there");
+      }
+      if(i == 400 && j == 400) {
+        printf("halfway there");
+      }
+      pixColor.scale(1.0 / (float) NUM_RAYS);
       pixColor.r = std::min(1.0f, std::max(0.0f, pixColor.r));
       pixColor.g = std::min(1.0f, std::max(0.0f, pixColor.g));
       pixColor.b = std::min(1.0f, std::max(0.0f, pixColor.b));
+      buf.push_back((unsigned char) pixColor.b);
+      buf.push_back((unsigned char) pixColor.g);
+      buf.push_back((unsigned char) pixColor.r);
       setPixel(i, j, pixColor.r, pixColor.g, pixColor.b);
     }
   }
+
+  FIBITMAP* p = FreeImage_ConvertFromRawBits(&buf[0], WINDOW_WIDTH, WINDOW_HEIGHT, 3 * WINDOW_WIDTH, 24, 0x0000FF, 0x00FF00, 0xFF0000, false);
+
+  FreeImage_Save(FIF_PNG, p, "output.png", 0);
+
+  FreeImage_Unload(p);
 
   std::cout <<"DONE" <<std::endl;
 
