@@ -32,8 +32,8 @@
 #include "matrix.h"
 
 #define PI 3.14159265  // Should be used from mathlib
-#define WINDOW_WIDTH 100.0
-#define WINDOW_HEIGHT 100.0
+#define WINDOW_WIDTH 800.0
+#define WINDOW_HEIGHT 800.0
 inline float sqr(float x) { return x*x; }
 
 using namespace std;
@@ -63,6 +63,7 @@ Color ambientColor = Color(0.3, 0.3, 0.3);
 Color diffuseColor = Color(0.7, 0.7, 0.7);
 Color specularColor = Color(0.7, 0.7, 0.7);
 float specularPower = 64;
+int REF_BOUNCES = 5;
 Color reflectiveColor = Color(0.7, 0.7, 0.7);
 Vector point;
 std::vector<Light*> lights;
@@ -502,10 +503,6 @@ void sample(float centerX, float centerY) {
   float yStep = (ul.y - ll.y) / viewport.h;
   float xStep = (lr.x - ll.x) / viewport.w;
 
-  printf("w = %d, h = %d\n", viewport.w, viewport.h);
-  printf("xStep = %f, yStep = %f\n", xStep, yStep);
-
-  printf("objects is %d\n", objects.size());
   for (i = 0; i < viewport.w; i++) {
     for (j = 0; j < viewport.h; j++) {
       // send out a ray
@@ -531,7 +528,7 @@ void sample(float centerX, float centerY) {
         Ray shadowRay = Ray();
         Color lightColor = Color();
         // Iterate over lights and compute color
-        for (unsigned int l=0; l < lights.size(); l++) {
+        for (int l=0; l < lights.size(); l++) {
           lights[l]->generateLightRay(&geo, shadowRay, lightColor); // Shadow Ray (Ray from object towards light source)
 
           Color tempColor;
@@ -543,8 +540,6 @@ void sample(float centerX, float centerY) {
           if (lights[l]->type.compare("ambient") == 0) continue;
           else {
             // Check if shadowRay isn't obstructed
-            // std::cout << "Shadow Ray" << std::endl;
-            // std::cout << shadowRay.dir.x << " " << shadowRay.dir.y << " " << shadowRay.dir.z << std::endl;
             bool blocked = false;
             for (int o = 0; o < objects.size(); o++) {
               if (objects[o].intersect(shadowRay) != -1.0) {
@@ -572,6 +567,8 @@ void sample(float centerX, float centerY) {
               tempColor = objects[nearestObjIndex].specular;
               tempColor.mul(lightColor);
               tempColor.scale(c3);
+
+
               pixColor.add(tempColor);
 
               // Linear falloff (UNUSED)
@@ -579,9 +576,84 @@ void sample(float centerX, float centerY) {
               //   color = color.scale(1/shadowRay.tMax)
               // }
             }
+
+            // Compute reflections
+            if (objects[nearestObjIndex].reflective.mag() != 0.0) {
+              Color totalRefColor = Color();
+              Ray refRay = Ray(geo.pos, geo.normal);
+              Color refColor = Color();
+              Color curMultiplier = objects[nearestObjIndex].reflective;
+              for (int bounce = 0; bounce < REF_BOUNCES; bounce++) {
+                float bestRefHit = std::numeric_limits<float>::infinity();
+                float nearestRef = -1;
+                for (int ro = 0; ro < objects.size(); ro++) {
+                  float refHit = objects[ro].intersect(refRay);
+                  if (refHit != -1.0 && refHit < bestRefHit) {
+                    bestRefHit = refHit;
+                    nearestRef = ro;
+                  }
+                }
+                if (nearestRef != -1) {
+                  objects[nearestRef].intersect(refRay, &geo);
+                  for (int rl = 0; rl < lights.size(); rl++) {
+                    Color tempRefColor = Color();
+                    lights[rl]->generateLightRay(&geo, refRay, refColor);
+                    tempRefColor = objects[nearestRef].ambient;
+                    tempRefColor.mul(refColor);
+                    tempRefColor.mul(curMultiplier);
+                    totalRefColor.add(tempRefColor);
+
+                    if (lights[rl]->type.compare("ambient") == 0) continue;
+                    else {
+                      // Check if refRay isn't obstructed
+                      blocked = false;
+                      for (int ro = 0; ro < objects.size(); ro++) {
+                        if (objects[ro].intersect(refRay) != -1.0) {
+                          blocked = true;
+                          break;
+                        }
+                      }
+                      if (!blocked) {
+                        Vector refDirection = refRay.dir;
+        
+                        // Compute diffuse color
+                        double refc2 = std::max(0.0f, (refDirection).dot(geo.normal));
+                        tempRefColor = objects[nearestRef].diffuse;
+                        tempRefColor.mul(refColor);
+                        tempRefColor.scale(refc2);
+                        tempRefColor.mul(curMultiplier);
+                        totalRefColor.add(tempRefColor);
+        
+                        // Compute specular color
+                        Vector refProjection = geo.normal;
+                        refProjection.scale(refDirection.dot(geo.normal)*2.0);
+                        Vector refReflection = refDirection;
+                        refReflection.scale(-1);
+                        refReflection.add(refProjection);
+                        double c3 = pow(std::max(0.0f, -refReflection.dot(refRay.dir)), objects[nearestRef].specularPow);
+                        tempRefColor = objects[nearestRef].specular;
+                        tempRefColor.mul(refColor);
+                        tempRefColor.scale(c3);
+                        tempRefColor.mul(curMultiplier);
+                        totalRefColor.add(tempRefColor);
+
+                        // Computer next reflection
+                        curMultiplier.mul(objects[nearestRef].reflective);
+                      }
+                    }
+
+                  }
+                } else {
+                  break;
+                }
+              }
+              pixColor.add(totalRefColor);
+            }
+
+            //pixColor.add(tempColor);
+
           }
         }
-        // TODO: Reflections...
       } else {
         pixColor = Color(0,0,0);
       }

@@ -3,6 +3,7 @@
 #include <vector>
 #include "matrix.h"
 #include <iostream>
+#include <limits>
 
 /*
  * Class Color
@@ -59,6 +60,10 @@ void Color::mul(Color color) {
   r = r * color.r;
   b = b * color.b;
   g = g * color.g;
+}
+
+float Color::mag() {
+  return sqrt((r * r) + (g * g) + (b * b));
 }
 
 /*

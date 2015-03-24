@@ -29,6 +29,7 @@ class Color {
     void add(Color color);
     void sub(Color color);
     void mul(Color color);
+    float mag();
 };
 
 /*
